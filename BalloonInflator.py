@@ -50,6 +50,9 @@ class PwmController:
         self.bcPin   = bcPin
         self.pctLast = 0
 
+    def GetValue(self):
+        return self.pctLast
+
     def SetPwmPctGradual(self, pct):
         if pct < 0:
             pct = 0
@@ -94,6 +97,9 @@ class PwmController:
 class Application():
     def __init__(self, bcPin):
         self.pwm = PwmController(bcPin)
+        self.status = "stopped"
+        self.psiHigh = 0.2
+        self.psiLow = 0.1
 
     async def Start(self, app):
         SetTimeoutInterval(1, self.OnTimeout)
@@ -101,12 +107,37 @@ class Application():
     async def Stop(self, app):
         self.pwm.End()
 
+    def BalloonInflateStart(self):
+        self.status = "running"
+
+    def BalloonInflateStop(self):
+        self.status = "stopped"
+
     def OnGet(self, name):
-        return {}
+        if name == "data":
+            return {
+                "status": self.status,
+                "pwm": self.pwm.GetValue(),
+                "psiHigh": self.psiHigh,
+                "psiLow": self.psiLow,
+            }
+        else:
+            return {}
 
     def OnSet(self, name, value):
+        print(f"OnSet: {name}, {value}")
         if name == "pwm":
             self.pwm.SetPwmPctGradual(int(value))
+        elif name == "run":
+            if value == "true":
+                self.BalloonInflateStart()
+            else:
+                self.BalloonInflateStop()
+        elif name == "psiHigh":
+            self.psiHigh = float(value)
+        elif name == "psiLow":
+            self.psiLow = float(value)
+
 
     def OnTimeout(self):
         pass

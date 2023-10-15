@@ -7,15 +7,24 @@
         <script type='module'>
 
 
-async function DoSet(name, value)
+async function DoGet(name)
 {
-    let urlMaker = new URL(`/set/${name}/${value}`, window.location);
+    let urlMaker = new URL(`/get/${name}`, window.location);
     let url = urlMaker.href;
-    console.log(url);
+    // console.log(url);
 
     let json = await Fetch(url);
 
     return json;
+}
+
+async function DoSet(name, value)
+{
+    let urlMaker = new URL(`/set/${name}/${value}`, window.location);
+    let url = urlMaker.href;
+    // console.log(url);
+
+    await Fetch(url);
 }
 
 async function Fetch(url)
@@ -44,20 +53,71 @@ async function Fetch(url)
 }
 
 
-export class App
+function RegisterEvent(element, event, fn)
+{
+    element.addEventListener(event, e => {
+        fn(e);
+    });
+    // element.dispatchEvent(new Event(event));
+}
+
+class App
 {
     constructor()
     {
+        this.domStatus = document.getElementById("status");
+        this.domStart = document.getElementById("start");
+        this.domStop = document.getElementById("stop");
         this.domPwm = document.getElementById("pwm");
+        this.domPwmVal = document.getElementById("pwmVal");
         this.domPsiHigh = document.getElementById("psiHigh");
+        this.domPsiHighVal = document.getElementById("psiHighVal");
         this.domPsiLow = document.getElementById("psiLow");
+        this.domPsiLowVal = document.getElementById("psiLowVal");
 
-        this.domPwm.addEventListener("input", (e) => {
+        this.domStart.addEventListener("click", (e) => {
+            DoSet("run", true);
+        });
+        this.domStop.addEventListener("click", (e) => {
+            DoSet("run", false);
+        });
+
+        RegisterEvent(this.domPwm, "input", e => {
             DoSet("pwm", this.domPwm.value);
         });
-        this.domPsiHigh.addEventListener("input", (e) => {
+        RegisterEvent(this.domPsiHigh, "input", e => {
             DoSet("psiHigh", this.domPsiHigh.value);
         });
+        RegisterEvent(this.domPsiLow, "input", e => {
+            DoSet("psiLow", this.domPsiLow.value);
+        });
+
+        // Set up polling
+        setInterval(() => { this.OnTimeout() }, 1000);
+        this.OnTimeout();
+    }
+
+    async OnTimeout()
+    {
+        let json = await DoGet("data");
+
+        if (json != null)
+        {
+            this.domStatus.innerHTML = json.status;
+
+            this.domPwm.value = parseInt(json.pwm);
+            this.domPwmVal.value = this.domPwm.value
+
+            this.domPsiHigh.value = parseFloat(json.psiHigh);
+            this.domPsiHighVal.value = this.domPsiHigh.value
+
+            this.domPsiLow.value = parseFloat(json.psiLow);
+            this.domPsiLowVal.value = this.domPsiLow.value;
+        }
+        else
+        {
+            this.domStatus.innerHTML = "ERROR";
+        }
     }
 }
 
@@ -117,7 +177,10 @@ th, td {
 
     </head>
     <body>
-        
+        Status: <span id="status"></span><br/>
+
+        <button id="start">Start Inflation</button>
+        <button id="stop">Stop Inflation</button>
 
         <table>
             <tr>
@@ -127,13 +190,13 @@ th, td {
             </tr>
             <tr>
                 <td>PSI High</td>
-                <td><input id="psiHigh" type="range" min="14.5" value="14.5" max="20" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = this.value"></td>
-                <td><output id="psiHighVal">14.5</output></td>
+                <td><input id="psiHigh" type="range" min="0" value="0.1" max="0.4" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = this.value"></td>
+                <td><output id="psiHighVal">0.1</output></td>
             </tr>
             <tr>
                 <td>PSI Low</td>
-                <td><input id="psiLow" type="range" min="10" value="14.5" max="14.5" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = this.value"></td>
-                <td><output id="psiLowVal">14.5</output></td>
+                <td><input id="psiLow" type="range" min="0" value="0.2" max="0.4" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = this.value"></td>
+                <td><output id="psiLowVal">0.2</output></td>
             </tr>
         </table>
         
