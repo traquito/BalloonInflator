@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+    <head>
+        <title>Chart Time Series</title>
+
+        <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+      
+<script type="module">
+
+// Expect data in the form of:
+// window.addEventListener('DOMContentLoaded', (event) => {
+//     let e = {
+//         data: {
+//             psiMin: 0.0,
+//             psiMax: 0.5,
+    
+//             psiSeries: {
+//                 data: [
+//                     ["2023-10-15 10:13:00", 0.10],
+//                     ["2023-10-15 10:13:01", 0.20],
+//                     ["2023-10-15 10:13:02", 0.15],
+//                     ["2023-10-15 10:13:03", 0.25],
+//                 ],
+//             },
+    
+//             psiHighSeries: {
+//                 data: [
+//                     ["2023-10-15 10:13:00", 0.20],
+//                     ["2023-10-15 10:13:01", 0.20],
+//                     ["2023-10-15 10:13:02", 0.20],
+//                     ["2023-10-15 10:13:03", 0.25],
+//                 ],
+//             },
+    
+//             psiLowSeries: {
+//                 data: [
+//                     ["2023-10-15 10:13:00", 0.10],
+//                     ["2023-10-15 10:13:01", 0.10],
+//                     ["2023-10-15 10:13:02", 0.10],
+//                     ["2023-10-15 10:13:03", 0.15],
+//                 ],
+//             },
+    
+            
+            
+//             pwmMin:   0,
+//             pwmMax: 100,
+            
+//             pwmSeries: {
+//                 data: [
+//                     ["2023-10-15 10:13:00",  0],
+//                     ["2023-10-15 10:13:01", 50],
+//                     ["2023-10-15 10:13:02", 75],
+//                     ["2023-10-15 10:13:03", 60],
+//                 ],
+//             },
+//         }
+//     }
+//     PlotData(e);
+// });
+
+
+window.addEventListener('DOMContentLoaded', (event) => {
+    if (window.top != window)
+    {
+        window.top.postMessage({
+            type: "REQ_DATA",
+        }, "*");
+    }
+});
+
+window.addEventListener("message", e => {
+    PlotData(e.data);
+});
+
+function PlotData(e)
+{
+    if (e.data)
+    {
+        let option = {
+            legend: {
+                orient: "horizontal",
+                icon: "roundrect",
+            },
+            xAxis: {
+                type: "time",
+                axisPointer: {
+                    show: true,
+                },
+            },
+            dataZoom: [
+                {
+                    type: 'inside',
+                    filterMode: "none",
+                },
+            ],
+            yAxis: [
+                {
+                    type: "value",
+                    name: "psi",
+                    min: e.data.psiMin,
+                    max: e.data.psiMax,
+                    splitLine: {
+                        show: false,
+                    },
+                    axisPointer: {
+                        show: true,
+                    },
+                },
+                {
+                    type: "value",
+                    name: "pwm",
+                    min: e.data.pwmMin,
+                    max: e.data.pwmMax,
+                    axisPointer: {
+                        show: true,
+                    },
+                },
+            ],
+            series: [
+                {
+                    name: "psi",
+                    type: "line",
+
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {
+                                offset: 0,
+                                color: 'rgb(255, 0, 0)',
+                            },
+                            {
+                                offset: 1,
+                                color: 'rgb(0, 255, 0)',
+                            },
+                        ]),
+                    },
+
+                    yAxisIndex: 0,
+                    data: e.data.psiSeries.data,
+                    connectNulls: true,
+                },
+                {
+                    name: "psiLow",
+                    type: "line",
+
+                    areaStyle: {
+                    },
+                    itemStyle: {
+                        color: "green",
+                    },
+                    
+                    yAxisIndex: 0,
+                    data: e.data.psiLowSeries.data,
+                    connectNulls: true,
+                },
+                {
+                    name: "psiHigh",
+                    type: "line",
+                    
+                    areaStyle: {
+                        origin: "end",
+                    },
+                    itemStyle: {
+                        color: "red",
+                    },
+                    
+
+                    yAxisIndex: 0,
+                    data: e.data.psiHighSeries.data,
+                    connectNulls: true,
+                },
+                {
+                    name: "pwm",
+                    type: "line",
+
+                    itemStyle: {
+                        color: "black",
+                    },
+
+                    yAxisIndex: 1,
+                    data: e.data.pwmSeries.data,
+                    connectNulls: true,
+                },
+            ],
+            animation: false,
+            grid: {
+                top: "40px",
+                left: "50px",
+                bottom: "30px",
+            },
+        };
+
+        // don't show points on lines
+        option.series[0].symbol = "none";
+        option.series[1].symbol = "none";
+        option.series[2].symbol = "none";
+        option.series[3].symbol = "none";
+
+        // create chart
+        let chart = echarts.init(document.getElementById('target'));
+        chart.setOption(option, true);
+
+        // handle resizing
+        window.addEventListener("resize", chart.resize);
+    }
+}
+
+</script>
+    </head>
+    
+    <body style="height: 100%; margin: 0">
+        <div id="target" style="height: 100%"></div>
+    </body>
+</html>

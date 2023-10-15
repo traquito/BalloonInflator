@@ -6,6 +6,21 @@
 
         <script type='module'>
 
+function GetDT()
+{
+    let dt = new Date();
+
+    let YYYY = dt.getFullYear();
+    let MM   = String((dt.getMonth() + 1)).padStart(2, '0')
+    let DD   = String(dt.getDate()).padStart(2, '0')
+    let hh   = String(dt.getHours()).padStart(2, '0')
+    let mm   = String(dt.getMinutes()).padStart(2, '0')
+    let ss   = String(dt.getSeconds()).padStart(2, '0')
+
+    let dateTime = `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}`;
+
+    return dateTime;
+}
 
 async function DoGet(name)
 {
@@ -63,11 +78,45 @@ function RegisterEvent(element, event, fn)
 
 class App
 {
+    ResetData()
+    {
+        this.data = {
+            psiMin: 0.0,
+            psiMax: 0.4,
+
+            psiSeries: {
+                data: [
+                ],
+            },
+
+            psiHighSeries: {
+                data: [
+                ],
+            },
+
+            psiLowSeries: {
+                data: [
+                ],
+            },
+            
+            pwmMin:   0,
+            pwmMax: 100,
+            
+            pwmSeries: {
+                data: [
+                ],
+            },
+        };
+    }
+
     constructor()
     {
+        this.ResetData();
+
         this.domStatus = document.getElementById("status");
         this.domStart = document.getElementById("start");
         this.domStop = document.getElementById("stop");
+        this.domReset = document.getElementById("reset");
         this.domPwm = document.getElementById("pwm");
         this.domPwmVal = document.getElementById("pwmVal");
         this.domPsiHigh = document.getElementById("psiHigh");
@@ -81,6 +130,10 @@ class App
         this.domStop.addEventListener("click", (e) => {
             DoSet("run", false);
         });
+        this.domReset.addEventListener("click", (e) => {
+            this.ResetData();
+            this.OnTimeout();
+        });
 
         RegisterEvent(this.domPwm, "input", e => {
             DoSet("pwm", this.domPwm.value);
@@ -91,6 +144,12 @@ class App
         RegisterEvent(this.domPsiLow, "input", e => {
             DoSet("psiLow", this.domPsiLow.value);
         });
+
+        this.graph = null;
+        window.addEventListener("message", e => {
+            this.graph = e.source;
+        });
+
 
         // Set up polling
         setInterval(() => { this.OnTimeout() }, 1000);
@@ -103,7 +162,24 @@ class App
 
         if (json != null)
         {
-            this.domStatus.innerHTML = json.status;
+            // update graph data
+            let dt = GetDT();
+
+            this.data.psiSeries.data.push([dt, json.psi]);
+            this.data.psiHighSeries.data.push([dt, json.psiHigh]);
+            this.data.psiLowSeries.data.push([dt, json.psiLow]);
+            this.data.pwmSeries.data.push([dt, json.pwm]);
+
+            if (this.graph)
+            {
+                this.graph.postMessage({
+                    type: "REP_DATA",
+                    data: this.data,
+                }, "*");
+            }
+
+            // update visual elements
+            this.domStatus.innerHTML = `${json.status}: PSI ${json.psi}`;
 
             this.domPwm.value = parseInt(json.pwm);
             this.domPwmVal.value = this.domPwm.value
@@ -134,8 +210,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
 iframe {
     border: 1px solid black;
-    width: 600px;
-    height: 300px;
+    width: 900px;
+    height: 400px;
     resize: both;
     overflow: hidden;
 }
@@ -181,6 +257,14 @@ th, td {
 
         <button id="start">Start Inflation</button>
         <button id="stop">Stop Inflation</button>
+
+        <br/>
+
+        </iframe><iframe id="graph" scrolling="no" src="ChartTimeSeries.html"></iframe>
+
+        <br/>
+
+        <button id="reset">Reset Graph</button>
 
         <table>
             <tr>

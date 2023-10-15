@@ -2,6 +2,7 @@
 
 import os
 import re
+import random
 import sys
 import time
 import asyncio
@@ -100,6 +101,7 @@ class Application():
         self.status = "stopped"
         self.psiHigh = 0.2
         self.psiLow = 0.1
+        self.psi = 0.0
 
     async def Start(self, app):
         SetTimeoutInterval(1, self.OnTimeout)
@@ -120,6 +122,7 @@ class Application():
                 "pwm": self.pwm.GetValue(),
                 "psiHigh": self.psiHigh,
                 "psiLow": self.psiLow,
+                "psi": self.psi
             }
         else:
             return {}
@@ -138,9 +141,9 @@ class Application():
         elif name == "psiLow":
             self.psiLow = float(value)
 
-
     def OnTimeout(self):
-        pass
+        # generate random psi for simulation of actual data
+        self.psi = round(random.randint(0, 40) * 0.01, 2)
 
 
 #####################################################################
