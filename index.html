@@ -116,7 +116,13 @@ class App
         this.domStatus = document.getElementById("status");
         this.domStart = document.getElementById("start");
         this.domStop = document.getElementById("stop");
+        this.domPause = document.getElementById("pause");
+        this.domUnPause = document.getElementById("unpause");
         this.domReset = document.getElementById("reset");
+        this.domStopGraph = document.getElementById("stopgraph");
+        this.domStartGraph = document.getElementById("startgraph");
+        this.domPsi = document.getElementById("psi");
+        this.domPsiVal = document.getElementById("psiVal");
         this.domPwm = document.getElementById("pwm");
         this.domPwmVal = document.getElementById("pwmVal");
         this.domPsiHigh = document.getElementById("psiHigh");
@@ -130,11 +136,29 @@ class App
         this.domStop.addEventListener("click", (e) => {
             DoSet("run", false);
         });
+
+        this.paused = false;
+        this.stopped = false;
+        this.domPause.addEventListener("click", (e) => {
+            this.paused = true;
+        });
+        this.domUnPause.addEventListener("click", (e) => {
+            this.paused = false;
+        });
         this.domReset.addEventListener("click", (e) => {
             this.ResetData();
             this.OnTimeout();
         });
+        this.domStopGraph.addEventListener("click", (e) => {
+            this.stopped = true;
+        });
+        this.domStartGraph.addEventListener("click", (e) => {
+            this.stopped = false;
+        });
 
+        RegisterEvent(this.domPsi, "input", e => {
+            DoSet("psi", this.domPsi.value);
+        });
         RegisterEvent(this.domPwm, "input", e => {
             DoSet("pwm", this.domPwm.value);
         });
@@ -162,24 +186,30 @@ class App
 
         if (json != null)
         {
-            // update graph data
-            let dt = GetDT();
-
-            this.data.psiSeries.data.push([dt, json.psi]);
-            this.data.psiHighSeries.data.push([dt, json.psiHigh]);
-            this.data.psiLowSeries.data.push([dt, json.psiLow]);
-            this.data.pwmSeries.data.push([dt, json.pwm]);
-
-            if (this.graph)
+            if (this.stopped == false)
             {
-                this.graph.postMessage({
-                    type: "REP_DATA",
-                    data: this.data,
-                }, "*");
+                // update graph data
+                let dt = GetDT();
+    
+                this.data.psiSeries.data.push([dt, json.psi]);
+                this.data.psiHighSeries.data.push([dt, json.psiHigh]);
+                this.data.psiLowSeries.data.push([dt, json.psiLow]);
+                this.data.pwmSeries.data.push([dt, json.pwmUsed]);
+    
+                if (this.graph && this.paused == false)
+                {
+                    this.graph.postMessage({
+                        type: "REP_DATA",
+                        data: this.data,
+                    }, "*");
+                }
             }
 
             // update visual elements
             this.domStatus.innerHTML = `${json.status}: PSI ${json.psi}`;
+
+            this.domPsi.value = parseFloat(json.psi);
+            this.domPsiVal.value = this.domPsi.value
 
             this.domPwm.value = parseInt(json.pwm);
             this.domPwmVal.value = this.domPwm.value
@@ -264,9 +294,18 @@ th, td {
 
         <br/>
 
+        <button id="pause">Pause Graph</button>
+        <button id="unpause">Un-Pause Graph</button>
         <button id="reset">Reset Graph</button>
+        <button id="stopgraph">Stop Graph</button>
+        <button id="startgraph">Start Graph</button>
 
         <table>
+            <tr>
+                <td>PSI (debug)</td>
+                <td><input id="psi" type="range" min="0" value="0" max="0.4" step="0.01" title="PSI" placeholder="PSI" oninput="psiVal.value = this.value"></td>
+                <td><output id="psiVal">0</output></td>
+            </tr>
             <tr>
                 <td>PWM</td>
                 <td><input id="pwm" type="range" min="0" value="0" max="100" step="1" title="PWM" placeholder="PWM" oninput="pwmVal.value = this.value"></td>

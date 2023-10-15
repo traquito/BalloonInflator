@@ -1,4 +1,4 @@
-#!/usr/bin/env -S python -u
+#!/usr/bin/env -S python3 -u
 
 import os
 import re
@@ -97,8 +97,10 @@ class PwmController:
 
 class Application():
     def __init__(self, bcPin):
+        self.pwmVal = 0
         self.pwm = PwmController(bcPin)
         self.status = "stopped"
+        self.direction = "up"
         self.psiHigh = 0.2
         self.psiLow = 0.1
         self.psi = 0.0
@@ -119,7 +121,8 @@ class Application():
         if name == "data":
             return {
                 "status": self.status,
-                "pwm": self.pwm.GetValue(),
+                "pwm": self.pwmVal,
+                "pwmUsed": self.pwm.GetValue(),
                 "psiHigh": self.psiHigh,
                 "psiLow": self.psiLow,
                 "psi": self.psi
@@ -128,9 +131,10 @@ class Application():
             return {}
 
     def OnSet(self, name, value):
-        print(f"OnSet: {name}, {value}")
+        # print(f"OnSet: {name}, {value}")
+        
         if name == "pwm":
-            self.pwm.SetPwmPctGradual(int(value))
+            self.pwmVal = int(value)
         elif name == "run":
             if value == "true":
                 self.BalloonInflateStart()
@@ -140,10 +144,26 @@ class Application():
             self.psiHigh = float(value)
         elif name == "psiLow":
             self.psiLow = float(value)
+        elif name == "psi":
+            self.psi = float(value)
 
     def OnTimeout(self):
-        # generate random psi for simulation of actual data
-        self.psi = round(random.randint(0, 40) * 0.01, 2)
+        if self.status == "running":
+            if self.direction == "up":
+                if self.psi <= self.psiLow:
+                    self.pwm.SetPwmPctGradual(100)
+                elif self.psi >= self.psiHigh:
+                    self.direction = "down"
+                    self.pwm.SetPwmPctGradual(0)
+                else:
+                    self.pwm.SetPwmPctGradual(self.pwmVal)
+            else:
+                if self.psi <= self.psiLow:
+                    self.pwm.SetPwmPctGradual(100)
+                    self.direction = "up"
+        else:
+            self.direction = "up"
+            self.pwm.SetPwmPctGradual(0)
 
 
 #####################################################################
