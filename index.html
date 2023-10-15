@@ -206,7 +206,17 @@ class App
             }
 
             // update visual elements
-            this.domStatus.innerHTML = `${json.status}: PSI ${json.psi}`;
+            this.domStatus.innerHTML = json.status;
+            if (json.status == "running")
+            {
+                this.domStatus.style.backgroundColor = "lightgreen";
+            }
+            else if (json.status == "stopped")
+            {
+                this.domStatus.style.backgroundColor = "pink";
+
+                this.domStatus.innerHTML += ` (${json.stopReason})`;
+            }
 
             this.domPsi.value = parseFloat(json.psi);
             this.domPsiVal.value = this.domPsi.value
@@ -223,6 +233,7 @@ class App
         else
         {
             this.domStatus.innerHTML = "ERROR";
+            this.domStatus.style.backgroundColor = "red";
         }
     }
 }
@@ -289,6 +300,7 @@ th, td {
         <button id="stop">Stop Inflation</button>
 
         <br/>
+        <br/>
 
         </iframe><iframe id="graph" scrolling="no" src="ChartTimeSeries.html"></iframe>
 
@@ -300,6 +312,9 @@ th, td {
         <button id="stopgraph">Stop Graph</button>
         <button id="startgraph">Start Graph</button>
 
+        <br/>
+        <br/>
+
         <table>
             <tr>
                 <td>PSI (debug)</td>
@@ -308,8 +323,8 @@ th, td {
             </tr>
             <tr>
                 <td>PWM</td>
-                <td><input id="pwm" type="range" min="0" value="0" max="100" step="1" title="PWM" placeholder="PWM" oninput="pwmVal.value = this.value"></td>
-                <td><output id="pwmVal">0</output></td>
+                <td><input id="pwm" type="range" min="0" value="80" max="100" step="1" title="PWM" placeholder="PWM" oninput="pwmVal.value = this.value"></td>
+                <td><output id="pwmVal">80</output></td>
             </tr>
             <tr>
                 <td>PSI High</td>

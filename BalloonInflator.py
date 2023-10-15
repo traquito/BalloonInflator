@@ -45,6 +45,21 @@ def SetTimeoutInterval(secs, fn):
 # GPIO Control
 #####################################################################
 
+class GpioController:
+    def __init__(self, bcPin):
+        self.pig     = pigpio.pi()
+        self.bcPin   = bcPin
+
+        # require an asserted high value to maintain high logic level
+        self.pig.set_pull_up_down(self.bcPin, pigpio.PUD_DOWN)
+
+    def GetValue(self):
+        return self.pig.read(self.bcPin)
+
+    def End(self):
+        self.pig.set_pull_up_down(self.bcPin, pigpio.PUD_OFF)
+
+
 class PwmController:
     def __init__(self, bcPin):
         self.pig     = pigpio.pi()
@@ -91,15 +106,19 @@ class PwmController:
         self.pig.stop()
 
 
+
+
 #####################################################################
 # Application
 #####################################################################
 
 class Application():
-    def __init__(self, bcPin):
-        self.pwmVal = 0
-        self.pwm = PwmController(bcPin)
+    def __init__(self, bcPinPwm, bcPinLimit):
+        self.pwmVal = 80
+        self.pwm = PwmController(bcPinPwm)
+        self.limit = GpioController(bcPinLimit)
         self.status = "stopped"
+        self.stopReason = "not started yet"
         self.direction = "up"
         self.psiHigh = 0.2
         self.psiLow = 0.1
@@ -110,6 +129,7 @@ class Application():
 
     async def Stop(self, app):
         self.pwm.End()
+        self.limit.End()
 
     def BalloonInflateStart(self):
         self.status = "running"
@@ -121,6 +141,7 @@ class Application():
         if name == "data":
             return {
                 "status": self.status,
+                "stopReason": self.stopReason,
                 "pwm": self.pwmVal,
                 "pwmUsed": self.pwm.GetValue(),
                 "psiHigh": self.psiHigh,
@@ -132,7 +153,7 @@ class Application():
 
     def OnSet(self, name, value):
         # print(f"OnSet: {name}, {value}")
-        
+
         if name == "pwm":
             self.pwmVal = int(value)
         elif name == "run":
@@ -140,6 +161,7 @@ class Application():
                 self.BalloonInflateStart()
             else:
                 self.BalloonInflateStop()
+                self.stopReason = "user"
         elif name == "psiHigh":
             self.psiHigh = float(value)
         elif name == "psiLow":
@@ -149,7 +171,11 @@ class Application():
 
     def OnTimeout(self):
         if self.status == "running":
-            if self.direction == "up":
+            limitHit = not self.limit.GetValue()
+            if limitHit:
+                self.BalloonInflateStop()
+                self.stopReason = "limit"
+            elif self.direction == "up":
                 if self.psi <= self.psiLow:
                     self.pwm.SetPwmPctGradual(100)
                 elif self.psi >= self.psiHigh:
@@ -208,12 +234,13 @@ class WebApplication():
 #####################################################################
 
 def Main():
-    if len(sys.argv) != 2:
-        print("Usage: " + sys.argv[0] + " <bcPin>")
+    if len(sys.argv) != 3:
+        print("Usage: " + sys.argv[0] + " <bcPinPwm> <bcPinLimit>")
         sys.exit(-1)
 
-    bcPin = int(sys.argv[1])
-    mainApp = Application(bcPin)
+    bcPinPwm = int(sys.argv[1])
+    bcPinLimit = int(sys.argv[2])
+    mainApp = Application(bcPinPwm, bcPinLimit)
 
     webApp = WebApplication(mainApp)
 
