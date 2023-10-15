@@ -6,6 +6,7 @@ import random
 import sys
 import time
 import asyncio
+import socket
 
 try:
     import pigpio
@@ -39,6 +40,10 @@ def SetTimeoutInterval(secs, fn):
         SetTimeoutInterval(secs, fn)
 
     asyncio.get_running_loop().call_later(secs, Function)
+
+def SetTimeout(secs, fn):
+    asyncio.get_running_loop().call_later(secs, fn)
+
 
 
 #####################################################################
@@ -127,6 +132,18 @@ class Application():
     async def Start(self, app):
         SetTimeoutInterval(1, self.OnTimeout)
 
+        def Banner():
+            print("")
+            print("")
+            print("")
+            print("Application running, target browser to:")
+            print(f"http://{socket.gethostname()}:8080/index.html")
+            print("")
+            print("")
+            print("")
+
+        SetTimeout(0.2, Banner)
+
     async def Stop(self, app):
         self.pwm.End()
         self.limit.End()
@@ -212,6 +229,7 @@ class WebApplication():
 
     def Start(self):
         web.run_app(self.webApp)
+
 
     async def OnGet(self, request):
         name = request.match_info.get('name')
