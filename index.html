@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Balloon Inflator</title>
+
+        <script type='module'>
+
+
+async function DoSet(name, value)
+{
+    let urlMaker = new URL(`/set/${name}/${value}`, window.location);
+    let url = urlMaker.href;
+    console.log(url);
+
+    let json = await Fetch(url);
+
+    return json;
+}
+
+async function Fetch(url)
+{
+    let retVal = null;
+
+    try {
+        let response = await fetch(url);
+
+        if (response.ok)
+        {
+            let json = await response.json();
+
+            retVal = json;
+        }
+        else
+        {
+            let err = await response.text();
+            console.log("ERR: " + err);
+        }
+    } catch (e) {
+        console.log("ERR: Exception: " + e);
+    }
+
+    return retVal;
+}
+
+
+export class App
+{
+    constructor()
+    {
+        this.domPwm = document.getElementById("pwm");
+        this.domPsiHigh = document.getElementById("psiHigh");
+        this.domPsiLow = document.getElementById("psiLow");
+
+        this.domPwm.addEventListener("input", (e) => {
+            DoSet("pwm", this.domPwm.value);
+        });
+        this.domPsiHigh.addEventListener("input", (e) => {
+            DoSet("psiHigh", this.domPsiHigh.value);
+        });
+    }
+}
+
+export let app = null;
+
+window.addEventListener('DOMContentLoaded', (event) => {
+    app = new App();
+    window.app = app;
+});
+
+</script>
+
+<style>
+
+iframe {
+    border: 1px solid black;
+    width: 600px;
+    height: 300px;
+    resize: both;
+    overflow: hidden;
+}
+
+table {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid lightgrey;
+    border-collapse: collapse;
+}
+
+th {
+    min-width: 30px;
+    background-color: lightblue;
+    border: 1px solid black;
+}
+
+th, td {
+    text-align: center;
+    padding: 2px;
+}
+
+.headerRow {
+    top: 0;
+    position: sticky;
+}
+
+
+.right {
+    float: right;
+}
+
+
+
+</style>
+
+    </head>
+    <body>
+        
+
+        <table>
+            <tr>
+                <td>PWM</td>
+                <td><input id="pwm" type="range" min="0" value="0" max="100" step="1" title="PWM" placeholder="PWM" oninput="pwmVal.value = this.value"></td>
+                <td><output id="pwmVal">0</output></td>
+            </tr>
+            <tr>
+                <td>PSI High</td>
+                <td><input id="psiHigh" type="range" min="14.5" value="14.5" max="20" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = this.value"></td>
+                <td><output id="psiHighVal">14.5</output></td>
+            </tr>
+            <tr>
+                <td>PSI Low</td>
+                <td><input id="psiLow" type="range" min="10" value="14.5" max="14.5" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = this.value"></td>
+                <td><output id="psiLowVal">14.5</output></td>
+            </tr>
+        </table>
+        
+        
+        <br/>
+
+
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+
+    </body>
+</html>
