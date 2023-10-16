@@ -167,7 +167,7 @@ class Application():
         self.pSensor = PressureSensor()
 
     async def Start(self, app):
-        SetTimeoutInterval(1, self.OnTimeout)
+        SetTimeoutInterval(0.2, self.OnTimeout)
 
         def Banner():
             print("")

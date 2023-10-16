@@ -16,8 +16,9 @@ function GetDT()
     let hh   = String(dt.getHours()).padStart(2, '0')
     let mm   = String(dt.getMinutes()).padStart(2, '0')
     let ss   = String(dt.getSeconds()).padStart(2, '0')
+    let ms   = String(dt.getMilliseconds()).padStart(3, '0')
 
-    let dateTime = `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}`;
+    let dateTime = `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}.${ms}`;
 
     return dateTime;
 }
@@ -183,7 +184,7 @@ class App
 
 
         // Set up polling
-        setInterval(() => { this.OnTimeout() }, 1000);
+        setInterval(() => { this.OnTimeout() }, 200);
         this.OnTimeout();
     }
 
