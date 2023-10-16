@@ -73,7 +73,6 @@ function RegisterEvent(element, event, fn)
     element.addEventListener(event, e => {
         fn(e);
     });
-    // element.dispatchEvent(new Event(event));
 }
 
 class App
@@ -113,6 +112,10 @@ class App
     {
         this.ResetData();
 
+        this.domSnapshotBaselinePsi = document.getElementById("snapshotBaselinePsi");
+        this.domPsiBaseline = document.getElementById("psiBaseline");
+        this.domPsiAbs = document.getElementById("psiAbs");
+        this.domPsiRelative = document.getElementById("psiRelative");
         this.domStatus = document.getElementById("status");
         this.domStart = document.getElementById("start");
         this.domStop = document.getElementById("stop");
@@ -129,6 +132,10 @@ class App
         this.domPsiHighVal = document.getElementById("psiHighVal");
         this.domPsiLow = document.getElementById("psiLow");
         this.domPsiLowVal = document.getElementById("psiLowVal");
+
+        this.domSnapshotBaselinePsi.addEventListener("click", (e) => {
+            DoSet("snapshotPsiBaseline", this.domPsiAbs.innerHTML);
+        });
 
         this.domStart.addEventListener("click", (e) => {
             DoSet("run", true);
@@ -218,6 +225,10 @@ class App
                 this.domStatus.innerHTML += ` (${json.stopReason})`;
             }
 
+            this.domPsiAbs.innerHTML = parseFloat(json.psiAbs).toFixed(2);
+            this.domPsiBaseline.innerHTML = parseFloat(json.psiBaseline).toFixed(2);
+            this.domPsiRelative.innerHTML = parseFloat(json.psi).toFixed(2);
+
             this.domPsi.value = parseFloat(json.psi);
             this.domPsiVal.value = this.domPsi.value
 
@@ -288,12 +299,33 @@ th, td {
     float: right;
 }
 
-
+.debug {
+    display: none;
+}
 
 </style>
 
     </head>
     <body>
+        <table>
+            <tr>
+                <td>PSI Now</td>
+                <td><span id="psiAbs">14.52</span></td>
+            </tr>
+            <tr>
+                <td>PSI Baseline</td>
+                <td><span id="psiBaseline">14.52</span></td>
+            </tr>
+            <tr>
+                <td>PSI Relative</td>
+                <td><span id="psiRelative">0.00</span></td>
+            </tr>
+        </table>
+        <button id="snapshotBaselinePsi">Snapshot Baseline</button>
+
+        <br/>
+        <br/>
+
         Status: <span id="status"></span><br/>
 
         <button id="start">Start Inflation</button>
@@ -316,7 +348,7 @@ th, td {
         <br/>
 
         <table>
-            <tr>
+            <tr class="debug">
                 <td>PSI (debug)</td>
                 <td><input id="psi" type="range" min="0" value="0" max="0.4" step="0.01" title="PSI" placeholder="PSI" oninput="psiVal.value = this.value"></td>
                 <td><output id="psiVal">0</output></td>

@@ -30,6 +30,20 @@ except:
     os._exit(-1)
 
 
+try:
+    import board
+    import busio
+    import adafruit_mprls
+except:
+    print("")
+    print("You don't have adafruit libs installed, you need that")
+    print("sudo pip3 install adafruit-circuitpython-mprls")
+    print("Install instructions here:")
+    print("https://learn.adafruit.com/adafruit-mprls-ported-pressure-sensor-breakout?view=all")
+    print("")
+    os._exit(-1)
+
+
 #####################################################################
 # Utl
 #####################################################################
@@ -47,8 +61,30 @@ def SetTimeout(secs, fn):
 
 
 #####################################################################
-# GPIO Control
+# GPIO and I2C Interfacing
 #####################################################################
+
+# https://github.com/adafruit/Adafruit_CircuitPython_MPRLS/blob/main/adafruit_mprls.py
+class PressureSensor:
+    def __init__(self):
+        self.i2c = busio.I2C(board.SCL, board.SDA)
+        self.mpr = adafruit_mprls.MPRLS(self.i2c, psi_min=0, psi_max=25)
+    
+    def GetHpa(self):
+        val = 0
+        for i in range(5):
+            val += self.mpr.pressure
+
+        avg = val / 5
+
+        return avg
+
+    def GetPsi(self):
+        hpa = self.GetHpa()
+        psi = hpa / 68.947572932
+
+        return psi
+
 
 class GpioController:
     def __init__(self, bcPin):
@@ -111,8 +147,6 @@ class PwmController:
         self.pig.stop()
 
 
-
-
 #####################################################################
 # Application
 #####################################################################
@@ -127,7 +161,10 @@ class Application():
         self.direction = "up"
         self.psiHigh = 0.2
         self.psiLow = 0.1
+        self.psiAbs = 14.52
+        self.psiBaseline = 14.52
         self.psi = 0.0
+        self.pSensor = PressureSensor()
 
     async def Start(self, app):
         SetTimeoutInterval(1, self.OnTimeout)
@@ -161,8 +198,10 @@ class Application():
                 "stopReason": self.stopReason,
                 "pwm": self.pwmVal,
                 "pwmUsed": self.pwm.GetValue(),
+                "psiBaseline": self.psiBaseline,
                 "psiHigh": self.psiHigh,
                 "psiLow": self.psiLow,
+                "psiAbs": self.psiAbs,
                 "psi": self.psi
             }
         else:
@@ -171,6 +210,8 @@ class Application():
     def OnSet(self, name, value):
         # print(f"OnSet: {name}, {value}")
 
+        if name == "snapshotPsiBaseline":
+            self.psiBaseline = float(value)
         if name == "pwm":
             self.pwmVal = int(value)
         elif name == "run":
@@ -187,6 +228,9 @@ class Application():
             self.psi = float(value)
 
     def OnTimeout(self):
+        self.psiAbs = self.pSensor.GetPsi()
+        self.psi = self.psiAbs - self.psiBaseline
+
         if self.status == "running":
             limitHit = not self.limit.GetValue()
             if limitHit:
