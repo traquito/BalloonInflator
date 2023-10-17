@@ -6,6 +6,41 @@
 
         <script type='module'>
 
+
+
+function ScrollableNumber(dom)
+{
+    let wheelevt =
+        (/Firefox/i.test(navigator.userAgent)) ?
+            "DOMMouseScroll"                   :
+            "mousewheel";
+
+    let fnOnMouseOver = e => {
+        dom.addEventListener(wheelevt, fnOnScroll);
+    };
+
+    let fnOnMouseOut = e => {
+        dom.removeEventListener(wheelevt, fnOnScroll);
+    };
+
+    let fnOnScroll = e => {
+        e.preventDefault();
+
+        let value = parseFloat(dom.value);
+        let step  = parseFloat(dom.step);
+
+        if (e.wheelDelta < 0) { dom.value = value - step; }
+        else                  { dom.value = value + step; }
+        
+        dom.dispatchEvent(new Event('input'))
+        
+        return false;
+    };
+
+    dom.addEventListener("mouseover", fnOnMouseOver);
+    dom.addEventListener("mouseout", fnOnMouseOut);
+}
+
 function GetDT()
 {
     let dt = new Date();
@@ -167,15 +202,19 @@ class App
         RegisterEvent(this.domPsi, "input", e => {
             DoSet("psi", this.domPsi.value);
         });
+        ScrollableNumber(this.domPsi);
         RegisterEvent(this.domPwm, "input", e => {
             DoSet("pwm", this.domPwm.value);
         });
+        ScrollableNumber(this.domPwm);
         RegisterEvent(this.domPsiHigh, "input", e => {
             DoSet("psiHigh", this.domPsiHigh.value);
         });
+        ScrollableNumber(this.domPsiHigh);
         RegisterEvent(this.domPsiLow, "input", e => {
             DoSet("psiLow", this.domPsiLow.value);
         });
+        ScrollableNumber(this.domPsiLow);
 
         this.graph = null;
         window.addEventListener("message", e => {
@@ -266,6 +305,11 @@ window.addEventListener('DOMContentLoaded', (event) => {
     font-size: small;
 }
 
+body {
+    margin-top: 4px;
+    margin-bottom: 0px;
+}
+
 iframe {
     border: 1px solid black;
     width: 900px;
@@ -328,6 +372,14 @@ th, td {
     padding: 10px;
 }
 
+input[type="range"] {
+  width: 250px;
+}
+
+.thinbr {
+    height: 4px;
+}
+
 
 </style>
 
@@ -387,46 +439,18 @@ th, td {
             </div>
         </div>
 
-        <br/>
+        <div class="thinbr"></div>
 
-        </iframe><iframe id="graph" scrolling="no" src="ChartTimeSeries.html"></iframe>
 
-        <br/>
+    </iframe><iframe id="graph" scrolling="no" src="ChartTimeSeries.html"></iframe>
 
-        <button id="pause">Pause Graph</button>
-        <button id="unpause">Un-Pause Graph</button>
-        <button id="reset">Reset Graph</button>
-        <button id="stopgraph">Stop Graph</button>
-        <button id="startgraph">Start Graph</button>
+    <br/>
 
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
+    <button id="pause">Pause Graph</button>
+    <button id="unpause">Un-Pause Graph</button>
+    <button id="reset">Reset Graph</button>
+    <button id="stopgraph">Stop Graph</button>
+    <button id="startgraph">Start Graph</button>
 
     </body>
 </html>
