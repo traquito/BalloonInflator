@@ -1,4 +1,23 @@
+## Preliminary Setup
+
+Assumes a new RPi version of Bookworm or above (2023-10-10)
+
+> sudo rm /usr/lib/python3.11/EXTERNALLY-MANAGED
+> sudo pip install aiohttp
+> sudo pip install adafruit-circuitpython-mprls
+> sudo pigpio
+add the following to the /etc/rc.local before the "exit 0" final line
+/usr/bin/pigpiod -s 1
+
+
+
 # BalloonInflator
+
+mkdir git
+cd git
+git clone https://github.com/traquito/BalloonInflator.git
+cd BalloonInflator
+sudo ./BalloonInflator.py 24 12
 
 
 
