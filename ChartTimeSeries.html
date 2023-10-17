@@ -78,10 +78,10 @@ function PlotData(e)
     if (e.data)
     {
         let option = {
-            legend: {
-                orient: "horizontal",
-                icon: "roundrect",
-            },
+            // legend: {
+            //     orient: "horizontal",
+            //     icon: "roundrect",
+            // },
             xAxis: {
                 type: "time",
                 axisPointer: {
@@ -97,7 +97,7 @@ function PlotData(e)
             yAxis: [
                 {
                     type: "value",
-                    name: "psi",
+                    name: "PSI",
                     min: e.data.psiMin,
                     max: e.data.psiMax,
                     splitLine: {
@@ -105,15 +105,27 @@ function PlotData(e)
                     },
                     axisPointer: {
                         show: true,
+                        label: {
+                            formatter: params => params.value.toFixed(2),
+                        },
+                    },
+                    axisLabel: {
+                        formatter: params => params.toFixed(2),
                     },
                 },
                 {
                     type: "value",
-                    name: "pwm",
+                    name: "PWM %",
                     min: e.data.pwmMin,
                     max: e.data.pwmMax,
                     axisPointer: {
                         show: true,
+                        label: {
+                            formatter: params => `${params.value.toFixed(0)} %`,
+                        },
+                    },
+                    axisLabel: {
+                        formatter: params => `${params} %`,
                     },
                 },
             ],

@@ -234,13 +234,13 @@ class App
             this.domPsiVal.value = this.domPsi.value
 
             this.domPwm.value = parseInt(json.pwm);
-            this.domPwmVal.value = this.domPwm.value
+            this.domPwmVal.value = `${this.domPwm.value} %`;
 
             this.domPsiHigh.value = parseFloat(json.psiHigh);
-            this.domPsiHighVal.value = this.domPsiHigh.value
+            this.domPsiHighVal.value = parseFloat(json.psiHigh).toFixed(2);
 
             this.domPsiLow.value = parseFloat(json.psiLow);
-            this.domPsiLowVal.value = this.domPsiLow.value;
+            this.domPsiLowVal.value = parseFloat(json.psiLow).toFixed(2);
         }
         else
         {
@@ -260,6 +260,11 @@ window.addEventListener('DOMContentLoaded', (event) => {
 </script>
 
 <style>
+
+* {
+    font-family: Consolas,monaco,monospace;
+    font-size: small;
+}
 
 iframe {
     border: 1px solid black;
@@ -286,7 +291,7 @@ th {
 }
 
 th, td {
-    text-align: center;
+    text-align: left;
     padding: 2px;
 }
 
@@ -304,10 +309,18 @@ th, td {
     display: none;
 }
 
+.align_left {
+    text-align: left;
+}
+
+.align_right {
+    text-align: right;
+}
+
 </style>
 
     </head>
-    <body>
+    <body class="align_left">
         <table>
             <tr>
                 <td>PSI Now</td>
@@ -319,7 +332,7 @@ th, td {
             </tr>
             <tr>
                 <td>PSI Relative</td>
-                <td><span id="psiRelative">0.00</span></td>
+                <td class="align_right"><span id="psiRelative">0.00</span></td>
             </tr>
         </table>
         <button id="snapshotBaselinePsi">Snapshot Baseline</button>
@@ -355,19 +368,19 @@ th, td {
                 <td><output id="psiVal">0</output></td>
             </tr>
             <tr>
-                <td>PWM</td>
-                <td><input id="pwm" type="range" min="0" value="80" max="100" step="1" title="PWM" placeholder="PWM" oninput="pwmVal.value = this.value"></td>
-                <td><output id="pwmVal">80</output></td>
+                <td>PWM %</td>
+                <td><input id="pwm" type="range" min="0" value="80" max="100" step="1" title="PWM" placeholder="PWM" oninput="pwmVal.value = `${this.value} %`"></td>
+                <td><output id="pwmVal">80 %</output></td>
             </tr>
             <tr>
                 <td>PSI High</td>
-                <td><input id="psiHigh" type="range" min="0" value="0.1" max="0.4" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = this.value"></td>
-                <td><output id="psiHighVal">0.1</output></td>
+                <td><input id="psiHigh" type="range" min="0" value="0.1" max="0.4" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = parseFloat(this.value).toFixed(2)"></td>
+                <td><output id="psiHighVal">0.10</output></td>
             </tr>
             <tr>
                 <td>PSI Low</td>
-                <td><input id="psiLow" type="range" min="0" value="0.2" max="0.4" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = this.value"></td>
-                <td><output id="psiLowVal">0.2</output></td>
+                <td><input id="psiLow" type="range" min="0" value="0.2" max="0.4" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = parseFloat(this.value).toFixed(2)"></td>
+                <td><output id="psiLowVal">0.20</output></td>
             </tr>
         </table>
         
