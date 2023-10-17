@@ -41,23 +41,6 @@ function ScrollableNumber(dom)
     dom.addEventListener("mouseout", fnOnMouseOut);
 }
 
-function GetDT()
-{
-    let dt = new Date();
-
-    let YYYY = dt.getFullYear();
-    let MM   = String((dt.getMonth() + 1)).padStart(2, '0')
-    let DD   = String(dt.getDate()).padStart(2, '0')
-    let hh   = String(dt.getHours()).padStart(2, '0')
-    let mm   = String(dt.getMinutes()).padStart(2, '0')
-    let ss   = String(dt.getSeconds()).padStart(2, '0')
-    let ms   = String(dt.getMilliseconds()).padStart(3, '0')
-
-    let dateTime = `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}.${ms}`;
-
-    return dateTime;
-}
-
 async function DoGet(name)
 {
     let urlMaker = new URL(`/get/${name}`, window.location);
@@ -115,7 +98,12 @@ class App
 {
     ResetData()
     {
-        this.data = {
+        this.data = this.MakeData();
+    }
+
+    MakeData()
+    {
+        return {
             psiMin: 0.0,
             psiMax: 0.4,
 
@@ -160,6 +148,11 @@ class App
         this.domReset = document.getElementById("reset");
         this.domStopGraph = document.getElementById("stopgraph");
         this.domStartGraph = document.getElementById("startgraph");
+        this.domHistFull = document.getElementById("histFull");
+        this.domHist10 = document.getElementById("hist10");
+        this.domHist5 = document.getElementById("hist5");
+        this.domHist1 = document.getElementById("hist1");
+        this.domHistLen = document.getElementById("histLen");
         this.domPsi = document.getElementById("psi");
         this.domPsiVal = document.getElementById("psiVal");
         this.domPwm = document.getElementById("pwm");
@@ -197,6 +190,24 @@ class App
         });
         this.domStartGraph.addEventListener("click", (e) => {
             this.stopped = false;
+        });
+        
+        this.histLenSec = null;
+        this.domHistFull.addEventListener("click", e => {
+            this.histLenSec = null;
+            this.domHistLen.innerHTML = "Full";
+        });
+        this.domHist10.addEventListener("click", e => {
+            this.histLenSec = 10 * 60;
+            this.domHistLen.innerHTML = "10 Min";
+        });
+        this.domHist5.addEventListener("click", e => {
+            this.histLenSec = 5 * 60;
+            this.domHistLen.innerHTML = "5 Min";
+        });
+        this.domHist1.addEventListener("click", e => {
+            this.histLenSec = 1 * 60;
+            this.domHistLen.innerHTML = "1 Min";
         });
 
         RegisterEvent(this.domPsi, "input", e => {
@@ -236,18 +247,47 @@ class App
             if (this.stopped == false)
             {
                 // update graph data
-                let dt = GetDT();
-    
+                let dt = Date.now();
+
                 this.data.psiSeries.data.push([dt, json.psi]);
                 this.data.psiHighSeries.data.push([dt, json.psiHigh]);
                 this.data.psiLowSeries.data.push([dt, json.psiLow]);
                 this.data.pwmSeries.data.push([dt, json.pwmUsed]);
+
+                let dataUse = this.data;
+
+                if (this.histLenSec != null)
+                {
+                    // calculate the time at start of window, in ms
+                    let timeStartMs = dt - (this.histLenSec * 1000)
+
+                    // find index of window of time we want to keep.
+                    // any array will due just fine, so pick the first.
+                    let arr = this.data.psiSeries.data;
+                    let idx = 0;
+                    for (let i = arr.length - 1; i >= 0; i--)
+                    {
+                        if (arr[i][0] <= timeStartMs)
+                        {
+                            idx = i;
+                            break;
+                        }
+                    }
+
+                    // copy data into new object for use in graph
+                    dataUse = this.MakeData();
+
+                    dataUse.psiSeries.data = this.data.psiSeries.data.slice(idx);
+                    dataUse.psiHighSeries.data = this.data.psiHighSeries.data.slice(idx);
+                    dataUse.psiLowSeries.data = this.data.psiLowSeries.data.slice(idx);
+                    dataUse.pwmSeries.data = this.data.pwmSeries.data.slice(idx);
+                }
     
                 if (this.graph && this.paused == false)
                 {
                     this.graph.postMessage({
                         type: "REP_DATA",
-                        data: this.data,
+                        data: dataUse,
                     }, "*");
                 }
             }
@@ -451,6 +491,13 @@ input[type="range"] {
     <button id="reset">Reset Graph</button>
     <button id="stopgraph">Stop Graph</button>
     <button id="startgraph">Start Graph</button>
+    |
+    <button id="histFull">Full History</button>
+    <button id="hist10">10 Min</button>
+    <button id="hist5">5 Min</button>
+    <button id="hist1">1 Min</button>
+    <span id="histLen">Full</span>
+
 
     </body>
 </html>
