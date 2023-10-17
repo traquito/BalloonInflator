@@ -317,35 +317,76 @@ th, td {
     text-align: right;
 }
 
+
+.control_container {
+    display: flex;
+}
+
+.control {
+    display: flex-block;
+    border: 1px solid black;
+    padding: 10px;
+}
+
+
 </style>
 
     </head>
-    <body class="align_left">
-        <table>
-            <tr>
-                <td>PSI Now</td>
-                <td><span id="psiAbs">14.52</span></td>
-            </tr>
-            <tr>
-                <td>PSI Baseline</td>
-                <td><span id="psiBaseline">14.52</span></td>
-            </tr>
-            <tr>
-                <td>PSI Relative</td>
-                <td class="align_right"><span id="psiRelative">0.00</span></td>
-            </tr>
-        </table>
-        <button id="snapshotBaselinePsi">Snapshot Baseline</button>
+    <body>
 
-        <br/>
-        <br/>
+        <div class="control_container">
+            <div class="control">
+                <table>
+                    <tr>
+                        <td>PSI Now</td>
+                        <td><span id="psiAbs">14.52</span></td>
+                    </tr>
+                    <tr>
+                        <td>PSI Baseline</td>
+                        <td><span id="psiBaseline">14.52</span></td>
+                    </tr>
+                    <tr>
+                        <td>PSI Relative</td>
+                        <td class="align_right"><span id="psiRelative">0.00</span></td>
+                    </tr>
+                </table>
+                <button id="snapshotBaselinePsi">Snapshot Baseline</button>
 
-        Status: <span id="status"></span><br/>
+            </div>
 
-        <button id="start">Start Inflation</button>
-        <button id="stop">Stop Inflation</button>
+            <div class="control" style="display: inline-grid; width: 300px">
+                Status: <span id="status"></span><br/>
+            
+                <button id="start">Start Inflation</button>
+                <button id="stop">Stop Inflation</button>
+            </div>
 
-        <br/>
+            <div class="control">
+                <table>
+                    <tr class="debug">
+                        <td>PSI (debug)</td>
+                        <td><input id="psi" type="range" min="0" value="0" max="0.4" step="0.01" title="PSI" placeholder="PSI" oninput="psiVal.value = this.value"></td>
+                        <td><output id="psiVal">0</output></td>
+                    </tr>
+                    <tr>
+                        <td>PWM %</td>
+                        <td><input id="pwm" type="range" min="0" value="80" max="100" step="1" title="PWM" placeholder="PWM" oninput="pwmVal.value = `${this.value} %`"></td>
+                        <td><output id="pwmVal">80 %</output></td>
+                    </tr>
+                    <tr>
+                        <td>PSI High</td>
+                        <td><input id="psiHigh" type="range" min="0" value="0.1" max="0.4" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = parseFloat(this.value).toFixed(2)"></td>
+                        <td><output id="psiHighVal">0.10</output></td>
+                    </tr>
+                    <tr>
+                        <td>PSI Low</td>
+                        <td><input id="psiLow" type="range" min="0" value="0.2" max="0.4" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = parseFloat(this.value).toFixed(2)"></td>
+                        <td><output id="psiLowVal">0.20</output></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
         <br/>
 
         </iframe><iframe id="graph" scrolling="no" src="ChartTimeSeries.html"></iframe>
@@ -360,34 +401,7 @@ th, td {
 
         <br/>
         <br/>
-
-        <table>
-            <tr class="debug">
-                <td>PSI (debug)</td>
-                <td><input id="psi" type="range" min="0" value="0" max="0.4" step="0.01" title="PSI" placeholder="PSI" oninput="psiVal.value = this.value"></td>
-                <td><output id="psiVal">0</output></td>
-            </tr>
-            <tr>
-                <td>PWM %</td>
-                <td><input id="pwm" type="range" min="0" value="80" max="100" step="1" title="PWM" placeholder="PWM" oninput="pwmVal.value = `${this.value} %`"></td>
-                <td><output id="pwmVal">80 %</output></td>
-            </tr>
-            <tr>
-                <td>PSI High</td>
-                <td><input id="psiHigh" type="range" min="0" value="0.1" max="0.4" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = parseFloat(this.value).toFixed(2)"></td>
-                <td><output id="psiHighVal">0.10</output></td>
-            </tr>
-            <tr>
-                <td>PSI Low</td>
-                <td><input id="psiLow" type="range" min="0" value="0.2" max="0.4" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = parseFloat(this.value).toFixed(2)"></td>
-                <td><output id="psiLowVal">0.20</output></td>
-            </tr>
-        </table>
-        
-        
         <br/>
-
-
         <br/>
         <br/>
         <br/>
