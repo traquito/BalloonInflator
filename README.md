@@ -12,7 +12,6 @@ add the following to the /etc/rc.local before the "exit 0" final line
 
 
 # BalloonInflator
-
 mkdir git
 cd git
 git clone https://github.com/traquito/BalloonInflator.git
