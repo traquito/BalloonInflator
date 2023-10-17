@@ -110,6 +110,16 @@ class PwmController:
     def GetValue(self):
         return self.pctLast
 
+    def MoveTowardPwm(self, targetPct, stepPct):
+        pctNow = self.GetValue()
+
+        if pctNow < targetPct:
+            self.SetPwmPctGradual(pctNow + stepPct)
+        elif pctNow > targetPct:
+            self.SetPwmPctGradual(pctNow - stepPct)
+        else:
+            pass
+
     def SetPwmPctGradual(self, pct):
         if pct < 0:
             pct = 0
@@ -228,6 +238,8 @@ class Application():
             self.psi = float(value)
 
     def OnTimeout(self):
+        PCT_STEP = 5
+
         self.psiAbs = self.pSensor.GetPsi()
         self.psi = self.psiAbs - self.psiBaseline
 
@@ -238,19 +250,21 @@ class Application():
                 self.stopReason = "limit"
             elif self.direction == "up":
                 if self.psi <= self.psiLow:
-                    self.pwm.SetPwmPctGradual(100)
+                    self.pwm.MoveTowardPwm(100, PCT_STEP)
                 elif self.psi >= self.psiHigh:
                     self.direction = "down"
-                    self.pwm.SetPwmPctGradual(0)
+                    self.pwm.MoveTowardPwm(0, PCT_STEP)
                 else:
-                    self.pwm.SetPwmPctGradual(self.pwmVal)
+                    self.pwm.MoveTowardPwm(self.pwmVal, PCT_STEP)
             else:
                 if self.psi <= self.psiLow:
-                    self.pwm.SetPwmPctGradual(100)
                     self.direction = "up"
+                    self.pwm.MoveTowardPwm(100, PCT_STEP)
+                else:
+                    self.pwm.MoveTowardPwm(0, PCT_STEP)
         else:
             self.direction = "up"
-            self.pwm.SetPwmPctGradual(0)
+            self.pwm.MoveTowardPwm(0, PCT_STEP)
 
 
 #####################################################################
