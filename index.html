@@ -2,7 +2,9 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>Balloon Inflator</title>
+        <title>Balloon Inflator - Traquito</title>
+
+        <link rel="icon" type="image/png" rel="noopener" target="_blank" href="/favicon.png">
 
 
         <!-- https://isamatov.com/prevent-timers-stopping-javascript/ -->
@@ -101,6 +103,42 @@ function RegisterEvent(element, event, fn)
     });
 }
 
+class RadioButton
+{
+    constructor(name)
+    {
+        this.name = name;
+        this.elList = document.getElementsByName(this.name);
+
+        this.fnOnChange = null;
+        for (let el of this.elList)
+        {
+            el.addEventListener("click", e => {
+                if (el.checked && this.fnOnChange)
+                {
+                    this.fnOnChange(el.value);
+                }
+            });
+        }
+    }
+
+    GetValue()
+    {
+        for (let el of this.elList)
+        {
+            if (el.checked)
+            {
+                return el.value;
+            }
+        }
+    }
+
+    OnChange(fn)
+    {
+        this.fnOnChange = fn;
+    }
+}
+
 class App
 {
     ResetData()
@@ -112,7 +150,7 @@ class App
     {
         return {
             psiMin: 0.0,
-            psiMax: 0.5,
+            psiMax: this.radRangeVal,
 
             psiSeries: {
                 data: [
@@ -141,6 +179,7 @@ class App
 
     constructor()
     {
+        this.radRangeVal = 0.5;
         this.ResetData();
 
         this.domSnapshotBaselinePsi = document.getElementById("snapshotBaselinePsi");
@@ -168,6 +207,16 @@ class App
         this.domPsiHighVal = document.getElementById("psiHighVal");
         this.domPsiLow = document.getElementById("psiLow");
         this.domPsiLowVal = document.getElementById("psiLowVal");
+        this.radRange = new RadioButton("range");
+
+        this.radRange.OnChange(value => {
+            this.radRangeVal = value;
+
+            this.domPsi.max = this.radRangeVal;
+            this.domPsiHigh.max = this.radRangeVal;
+            this.domPsiLow.max = this.radRangeVal;
+            this.data.psiMax = this.radRangeVal;
+        });
 
         this.domSnapshotBaselinePsi.addEventListener("click", (e) => {
             DoSet("snapshotPsiBaseline", this.domPsiAbs.innerHTML);
@@ -481,6 +530,16 @@ input[type="range"] {
                         <td>PSI Low</td>
                         <td><input id="psiLow" type="range" min="0" value="0.2" max="0.5" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = parseFloat(this.value).toFixed(2)"></td>
                         <td><output id="psiLowVal">0.20</output></td>
+                    </tr>
+                </table>
+
+                <div class="thinbr"></div>
+
+                <table>
+                    <tr>
+                        <td>PSI Scale</td>
+                        <td><input type="radio" id="rangeHalf" name="range" value="0.5" checked><label for="rangeHalf">0.5 PSI</label></td>
+                        <td><input type="radio" id="rangeFull" name="range" value="1.0"><label for="rangeFull">1.0 PSI</label></td>
                     </tr>
                 </table>
             </div>
