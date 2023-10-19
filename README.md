@@ -12,7 +12,7 @@ This application allows you to:
 - Stop the process when a limit switch is triggered
   - This is expected to indicate the balloon is now stretched to the desired size
 
-[TODO screenshot]
+![Screenshot](BalloonInflator.png)
 
 
 # Hardware Requirements
