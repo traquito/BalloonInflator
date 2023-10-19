@@ -112,7 +112,7 @@ class App
     {
         return {
             psiMin: 0.0,
-            psiMax: 0.4,
+            psiMax: 0.5,
 
             psiSeries: {
                 data: [
@@ -464,7 +464,7 @@ input[type="range"] {
                 <table>
                     <tr class="debug">
                         <td>PSI (debug)</td>
-                        <td><input id="psi" type="range" min="0" value="0" max="0.4" step="0.01" title="PSI" placeholder="PSI" oninput="psiVal.value = this.value"></td>
+                        <td><input id="psi" type="range" min="0" value="0" max="0.5" step="0.01" title="PSI" placeholder="PSI" oninput="psiVal.value = this.value"></td>
                         <td><output id="psiVal">0</output></td>
                     </tr>
                     <tr>
@@ -474,12 +474,12 @@ input[type="range"] {
                     </tr>
                     <tr>
                         <td>PSI High</td>
-                        <td><input id="psiHigh" type="range" min="0" value="0.1" max="0.4" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = parseFloat(this.value).toFixed(2)"></td>
+                        <td><input id="psiHigh" type="range" min="0" value="0.1" max="0.5" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = parseFloat(this.value).toFixed(2)"></td>
                         <td><output id="psiHighVal">0.10</output></td>
                     </tr>
                     <tr>
                         <td>PSI Low</td>
-                        <td><input id="psiLow" type="range" min="0" value="0.2" max="0.4" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = parseFloat(this.value).toFixed(2)"></td>
+                        <td><input id="psiLow" type="range" min="0" value="0.2" max="0.5" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = parseFloat(this.value).toFixed(2)"></td>
                         <td><output id="psiLowVal">0.20</output></td>
                     </tr>
                 </table>
