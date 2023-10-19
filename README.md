@@ -71,9 +71,13 @@ Add the following to the /etc/rc.local before the "exit 0" final line
 ## Get the Balloon Inflator software from Github
 
 > mkdir git
+
 > cd git
+
 > git clone https://github.com/traquito/BalloonInflator.git
+
 > cd BalloonInflator
+
 > sudo ./BalloonInflator.py 24 12
 
 ### Usage
