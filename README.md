@@ -29,7 +29,7 @@ Requirements:
 
 > sudo raspi-config
 
-Select 5 Interfacing Options \
+Select Interfacing Options \
 Select I2C \
 Select Yes to enable I2C
 
