@@ -139,14 +139,20 @@ class RadioButton
     }
 }
 
+function FtoC(tempF)
+{
+    return (tempF - 32.0) * (5.0 / 9.0);
+}
+
 class App
 {
     ResetData()
     {
-        this.data = this.MakeData();
+        this.dataPsiPwm = this.MakeDataPsiPwm();
+        this.dataTempHumidity = this.MakeDataTempHumidity();
     }
 
-    MakeData()
+    MakeDataPsiPwm()
     {
         return {
             psiMin: 0.0,
@@ -171,6 +177,30 @@ class App
             pwmMax: 100,
             
             pwmSeries: {
+                data: [
+                ],
+            },
+        };
+    }
+
+    MakeDataTempHumidity()
+    {
+        return {
+            tempFMin: 70.0,
+            tempFMax: 100.0,
+
+            tempCMin: FtoC(70.0),
+            tempCMax: FtoC(100.0),
+
+            tempFSeries: {
+                data: [
+                ],
+            },
+
+            humMin:   0,
+            humMax: 100,
+            
+            humSeries: {
                 data: [
                 ],
             },
@@ -215,7 +245,7 @@ class App
             this.domPsi.max = this.radRangeVal;
             this.domPsiHigh.max = this.radRangeVal;
             this.domPsiLow.max = this.radRangeVal;
-            this.data.psiMax = this.radRangeVal;
+            this.dataPsiPwm.psiMax = this.radRangeVal;
         });
 
         this.domSnapshotBaselinePsi.addEventListener("click", (e) => {
@@ -283,9 +313,17 @@ class App
         });
         ScrollableNumber(this.domPsiLow);
 
-        this.graph = null;
+        this.graphPsiPwm = null;
+        this.graphTempHumidity = null;
         window.addEventListener("message", e => {
-            this.graph = e.source;
+            if (e.data.from == "PsiPwm")
+            {
+                this.graphPsiPwm = e.source;
+            }
+            else if (e.data.from == "TempHumidity")
+            {
+                this.graphTempHumidity = e.source
+            }
         });
 
 
@@ -305,12 +343,17 @@ class App
                 // update graph data
                 let dt = Date.now();
 
-                this.data.psiSeries.data.push([dt, json.psi]);
-                this.data.psiHighSeries.data.push([dt, json.psiHigh]);
-                this.data.psiLowSeries.data.push([dt, json.psiLow]);
-                this.data.pwmSeries.data.push([dt, json.pwmUsed]);
+                this.dataPsiPwm.psiSeries.data.push([dt, json.psi]);
+                this.dataPsiPwm.psiHighSeries.data.push([dt, json.psiHigh]);
+                this.dataPsiPwm.psiLowSeries.data.push([dt, json.psiLow]);
+                this.dataPsiPwm.pwmSeries.data.push([dt, json.pwmUsed]);
 
-                let dataUse = this.data;
+                let dataPsiPwmUse = this.dataPsiPwm;
+
+                this.dataTempHumidity.tempFSeries.data.push([dt, json.tempF]);
+                this.dataTempHumidity.humSeries.data.push([dt, json.humPct]);
+
+                let dataTempHumidityUse = this.dataTempHumidity;
 
                 if (this.histLenSec != null)
                 {
@@ -319,7 +362,7 @@ class App
 
                     // find index of window of time we want to keep.
                     // any array will due just fine, so pick the first.
-                    let arr = this.data.psiSeries.data;
+                    let arr = this.dataPsiPwm.psiSeries.data;
                     let idx = 0;
                     for (let i = arr.length - 1; i >= 0; i--)
                     {
@@ -331,19 +374,32 @@ class App
                     }
 
                     // copy data into new object for use in graph
-                    dataUse = this.MakeData();
+                    dataPsiPwmUse = this.MakeDataPsiPwm();
+                    
+                    dataPsiPwmUse.psiSeries.data = this.dataPsiPwm.psiSeries.data.slice(idx);
+                    dataPsiPwmUse.psiHighSeries.data = this.dataPsiPwm.psiHighSeries.data.slice(idx);
+                    dataPsiPwmUse.psiLowSeries.data = this.dataPsiPwm.psiLowSeries.data.slice(idx);
+                    dataPsiPwmUse.pwmSeries.data = this.dataPsiPwm.pwmSeries.data.slice(idx);
+                    
+                    dataTempHumidityUse = this.MakeDataTempHumidity();
 
-                    dataUse.psiSeries.data = this.data.psiSeries.data.slice(idx);
-                    dataUse.psiHighSeries.data = this.data.psiHighSeries.data.slice(idx);
-                    dataUse.psiLowSeries.data = this.data.psiLowSeries.data.slice(idx);
-                    dataUse.pwmSeries.data = this.data.pwmSeries.data.slice(idx);
+                    dataTempHumidityUse.tempFSeries.data = this.dataTempHumidity.tempFSeries.data.slice(idx);
+                    dataTempHumidityUse.humSeries.data = this.dataTempHumidity.humSeries.data.slice(idx);
                 }
     
-                if (this.graph && this.paused == false)
+                if (this.graphPsiPwm && this.paused == false)
                 {
-                    this.graph.postMessage({
+                    this.graphPsiPwm.postMessage({
                         type: "REP_DATA",
-                        data: dataUse,
+                        data: dataPsiPwmUse,
+                    }, "*");
+                }
+    
+                if (this.graphTempHumidity && this.paused == false)
+                {
+                    this.graphTempHumidity.postMessage({
+                        type: "REP_DATA",
+                        data: dataTempHumidityUse,
                     }, "*");
                 }
             }
@@ -548,10 +604,10 @@ input[type="range"] {
         <div class="thinbr"></div>
 
 
-    </iframe><iframe id="graph" scrolling="no" src="ChartTimeSeries.html"></iframe>
-
+    </iframe><iframe scrolling="no" src="ChartPsiPwm.html"></iframe>
+    
     <br/>
-
+    
     <button id="pause">Pause Graph</button>
     <button id="unpause">Un-Pause Graph</button>
     |
@@ -566,6 +622,11 @@ input[type="range"] {
     <button id="hist1">1 Min</button>
     <span id="histLen">Full</span>
 
+    <br/>
 
+    <div class="thinbr"></div>
+
+    </iframe><iframe scrolling="no" src="ChartTempHumidity.html"></iframe>
+    
     </body>
 </html>

@@ -58,6 +58,15 @@ def SetTimeoutInterval(secs, fn):
 def SetTimeout(secs, fn):
     asyncio.get_running_loop().call_later(secs, fn)
 
+def IncrRandomClamp(valNow, uniLow, uniHigh, valLow, valHigh):
+    val = valNow + random.uniform(uniLow, uniHigh)
+
+    if val < valLow:
+        val = valLow
+    elif val > valHigh:
+        val = valHigh
+    
+    return val
 
 
 #####################################################################
@@ -171,10 +180,13 @@ class Application():
         self.direction = "up"
         self.psiHigh = 0.2
         self.psiLow = 0.1
-        self.psiAbs = 14.52
-        self.psiBaseline = 14.52
+        self.psiAbs = 14.5
+        self.psiBaseline = self.psiAbs
         self.psi = 0.0
         self.pSensor = PressureSensor()
+        self.psiAbsExt = self.psiAbs
+        self.tempF = 72
+        self.humPct = 50
 
     async def Start(self, app):
         SetTimeoutInterval(0.2, self.OnTimeout)
@@ -212,14 +224,15 @@ class Application():
                 "psiHigh": self.psiHigh,
                 "psiLow": self.psiLow,
                 "psiAbs": self.psiAbs,
-                "psi": self.psi
+                "psi": self.psi,
+                "psiAbsExt": self.psiAbsExt,
+                "tempF": self.tempF,
+                "humPct": self.humPct,
             }
         else:
             return {}
 
     def OnSet(self, name, value):
-        # print(f"OnSet: {name}, {value}")
-
         if name == "snapshotPsiBaseline":
             self.psiBaseline = float(value)
         if name == "pwm":
@@ -242,6 +255,10 @@ class Application():
 
         self.psiAbs = self.pSensor.GetPsi()
         self.psi = self.psiAbs - self.psiBaseline
+        self.psi = IncrRandomClamp(self.psi, -0.01, 0.01, 0.0, 0.5)
+        self.psiAbsExt = self.psi
+        self.tempF = IncrRandomClamp(self.tempF, -1, 1, 70, 100)
+        self.humPct = IncrRandomClamp(self.humPct, -1, 1, 0, 100)
 
         if self.status == "running":
             limitHit = not self.limit.GetValue()

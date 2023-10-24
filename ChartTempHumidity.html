@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+    <head>
+        <title>Chart Time Series</title>
+
+        <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+      
+<script type="module">
+
+
+window.addEventListener('DOMContentLoaded', (event) => {
+    if (window.top != window)
+    {
+        window.top.postMessage({
+            type: "REQ_DATA",
+            from: "TempHumidity"
+        }, "*");
+    }
+});
+
+window.addEventListener("message", e => {
+    PlotData(e.data);
+});
+
+function PlotData(e)
+{
+    if (e.data)
+    {
+        let option = {
+            xAxis: {
+                type: "time",
+                axisPointer: {
+                    show: true,
+                },
+            },
+            dataZoom: [
+                {
+                    type: 'inside',
+                    filterMode: "none",
+                },
+            ],
+            yAxis: [
+                {
+                    type: "value",
+                    name: "TempF",
+                    min: e.data.tempFMin,
+                    max: e.data.tempFMax,
+                    position: "left",
+                    splitLine: {
+                        show: false,
+                    },
+                    axisPointer: {
+                        show: true,
+                        label: {
+                            formatter: params => params.value.toFixed(0),
+                        },
+                    },
+                    axisLabel: {
+                        formatter: params => params.toFixed(0),
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: "red",
+                        },
+                    },
+                },
+                {
+                    type: "value",
+                    name: "TempC",
+                    min: e.data.tempCMin,
+                    max: e.data.tempCMax,
+                    position: "left",
+                    offset: 50,
+                    splitLine: {
+                        show: false,
+                    },
+                    axisPointer: {
+                        show: true,
+                        label: {
+                            formatter: params => params.value.toFixed(0),
+                        },
+                    },
+                    axisLabel: {
+                        formatter: params => params.toFixed(0),
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: "red",
+                        },
+                    },
+                },
+                {
+                    type: "value",
+                    name: "Humidity %",
+                    position: "right",
+                    min: e.data.humMin,
+                    max: e.data.humMax,
+                    axisPointer: {
+                        show: true,
+                        label: {
+                            formatter: params => `${params.value.toFixed(0)} %`,
+                        },
+                    },
+                    axisLabel: {
+                        formatter: params => `${params} %`,
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: "blue",
+                        },
+                    },
+                },
+            ],
+            series: [
+                {
+                    name: "TempF",
+                    type: "line",
+
+                    itemStyle: {
+                        color: "red",
+                    },
+
+                    yAxisIndex: 0,
+                    data: e.data.tempFSeries.data,
+                    connectNulls: true,
+                },
+                {
+                    name: "TempC",
+                    type: "line",
+
+                    itemStyle: {
+                        color: "red",
+                    },
+
+                    yAxisIndex: 1,
+                    // data: e.data.tempCSeries.data,
+                    connectNulls: true,
+                },
+                {
+                    name: "Humidity %",
+                    type: "line",
+
+                    itemStyle: {
+                        color: "blue",
+                    },
+                    
+                    yAxisIndex: 2,
+                    data: e.data.humSeries.data,
+                    connectNulls: true,
+                },
+            ],
+            animation: false,
+            grid: {
+                top: "40px",
+                // left: "50px",
+                bottom: "30px",
+            },
+        };
+
+        // don't show points on lines
+        option.series[0].symbol = "none";
+        option.series[1].symbol = "none";
+        option.series[2].symbol = "none";
+
+        // create chart
+        let chart = echarts.init(document.getElementById('target'));
+        chart.setOption(option, true);
+
+        // handle resizing
+        window.addEventListener("resize", chart.resize);
+    }
+}
+
+</script>
+    </head>
+    
+    <body style="height: 100%; margin: 0">
+        <div id="target" style="height: 100%"></div>
+    </body>
+</html>
