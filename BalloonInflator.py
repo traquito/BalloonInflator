@@ -7,6 +7,9 @@ import sys
 import time
 import asyncio
 import socket
+import bme280
+import smbus2
+
 
 try:
     import pigpio
@@ -93,6 +96,35 @@ class PressureSensor:
         psi = hpa / 68.947572932
 
         return psi
+
+
+class BME280:
+    def __init__(self):
+        self.bus = smbus2.SMBus(1)
+        self.address = 0x77
+
+        bme280.load_calibration_params(self.bus, self.address)
+
+    def GetValue(self):
+        SAMPLE_COUNT = 5
+
+        humPctSum = 0
+        hpaSum = 0
+        tempCSum = 0
+        for i in range(SAMPLE_COUNT):
+            sample = bme280.sample(self.bus, self.address)
+            humPctSum += sample.humidity
+            hpaSum    += sample.pressure
+            tempCSum  += sample.temperature
+
+        humPct = humPctSum / SAMPLE_COUNT
+        hpa = hpaSum / SAMPLE_COUNT
+        tempC = tempCSum / SAMPLE_COUNT
+
+        psi = hpa / 68.947572932
+        tempF = (tempC * 9.0 / 5.0) + 32
+
+        return (humPct, psi, tempF)
 
 
 class GpioController:
@@ -184,7 +216,9 @@ class Application():
         self.psiBaseline = self.psiAbs
         self.psi = 0.0
         self.pSensor = PressureSensor()
+        self.bme280 = BME280()
         self.psiAbsExt = self.psiAbs
+        self.psiBaselineExt = self.psiAbsExt
         self.tempF = 72
         self.humPct = 50
 
@@ -221,6 +255,7 @@ class Application():
                 "pwm": self.pwmVal,
                 "pwmUsed": self.pwm.GetValue(),
                 "psiBaseline": self.psiBaseline,
+                "psiBaselineExt": self.psiBaselineExt,
                 "psiHigh": self.psiHigh,
                 "psiLow": self.psiLow,
                 "psiAbs": self.psiAbs,
@@ -235,6 +270,8 @@ class Application():
     def OnSet(self, name, value):
         if name == "snapshotPsiBaseline":
             self.psiBaseline = float(value)
+        if name == "snapshotPsiBaselineExt":
+            self.psiBaselineExt = float(value)
         if name == "pwm":
             self.pwmVal = int(value)
         elif name == "run":
@@ -254,11 +291,8 @@ class Application():
         PCT_STEP = 5
 
         self.psiAbs = self.pSensor.GetPsi()
-        self.psi = self.psiAbs - self.psiBaseline
-        self.psi = IncrRandomClamp(self.psi, -0.01, 0.01, 0.0, 0.5)
-        self.psiAbsExt = self.psi
-        self.tempF = IncrRandomClamp(self.tempF, -1, 1, 70, 100)
-        self.humPct = IncrRandomClamp(self.humPct, -1, 1, 0, 100)
+        self.humPct, self.psiAbsExt, self.tempF = self.bme280.GetValue()
+        self.psi = (self.psiAbs - self.psiBaseline) - (self.psiAbsExt - self.psiBaselineExt)
 
         if self.status == "running":
             limitHit = not self.limit.GetValue()

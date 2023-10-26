@@ -15,11 +15,29 @@ This application allows you to:
 ![Screenshot](BalloonInflator.png)
 
 
+# Principle of Operation
+
+The program uses two sensors to continuously calculate the internal pressure (PSI) exerted on the balloon.
+
+The idea is that internal pressure on the balloon will cause the balloon to expand and ultimately stretch to a larger volume.  A final size of the balloon should be known in advance, and a limit switch used to indicate to the program that stretching is complete.
+
+The fundamental concern of the program is to not burst the balloon by exerting too much pressure internally.  The user is able to set limits on the pressure exerted on the balloon during inflation.
+
+To calculate the pressure exerted on the balloon the program will use two sensors, one internal to the balloon pressure, and one external.
+
+Before the program starts, the user should click the "Snapshot Baseline" button to capture the internal and external pressure sensor value.  As the balloon is inflated, these baseline values are compared to new real-time measurements to determine the net pressure exerted on the balloon.
+
+As the program runs, the internal pressure sensor will register an increase in pressure due to the air pump running.  The external pressure sensor will also monitor changes in the natural outside air pressure.
+
+An increase in internal pressure alone will increase the calculated net internal pressure.  An increase of the external pressure during that time will decrease the net inernal pressure.  Other predictable variants of this scenario are accounted for.
+
+
 # Hardware Requirements
 
 Requirements:
 - Raspberry Pi (any model running linux)
-- Adafruit air pressure sensor module [link](https://www.adafruit.com/product/3965) that I found cheaper (and in stock) on amazon [link](https://www.amazon.com/gp/product/B07JP4Y7S8/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1)
+- Adafruit air pressure sensor module ([link](https://www.adafruit.com/product/3965)) that I found cheaper (and in stock) on amazon ([link](https://www.amazon.com/gp/product/B07JP4Y7S8/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1))
+- Adafruit BME280 pressure/temp/humidity sensor ([link](https://www.adafruit.com/product/2652)) also on ebay ([link](https://www.ebay.com/sch/i.html?_from=R40&_trksid=p4432023.m570.l1313&_nkw=bme280&_sacat=0)) -- watch out for fakes
 - Air pump which can be controlled via PWM
 - Limit switch
 
@@ -33,8 +51,11 @@ Select Interfacing Options \
 Select I2C \
 Select Yes to enable I2C
 
-Make sure your pressure sensor is plugged in and run this command. \
-You should see that device 0x18 responds (as shown in the table below).
+Make sure your pressure sensors are plugged in and run this command. \
+You should see that device 0x18 (pressure sensor) and 0x77 (BME280) responds (as shown in the table below).
+
+Note -- the Adafruit BME280 sensor uses address 0x77, ebay or other variants may be on 0x76 or other addresses.
+
 > sudo i2cdetect -y 1
 
 ```
@@ -46,7 +67,7 @@ You should see that device 0x18 responds (as shown in the table below).
 40: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-70: -- -- -- -- -- -- -- --
+70: -- -- -- -- -- -- -- 77
 ```
 
 
@@ -60,6 +81,8 @@ Assumes a new RPi version of Bookworm or above (2023-10-10)
 > sudo pip install aiohttp
 
 > sudo pip install adafruit-circuitpython-mprls
+
+> sudo pip3 install RPi.bme280
 
 Add the following to the /etc/rc.local before the "exit 0" final line
 ```
@@ -113,3 +136,17 @@ Here we see two GPIO pins specified for PWM and limit.
 The application starts. \
 Ignore the first two lines of output. \
 The final line tells you the URL you can visit to run the web application.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

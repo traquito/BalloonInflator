@@ -214,8 +214,13 @@ class App
 
         this.domSnapshotBaselinePsi = document.getElementById("snapshotBaselinePsi");
         this.domPsiBaseline = document.getElementById("psiBaseline");
+        this.domPsiBaselineExt = document.getElementById("psiBaselineExt");
         this.domPsiAbs = document.getElementById("psiAbs");
         this.domPsiRelative = document.getElementById("psiRelative");
+        this.domPsiAbsExt = document.getElementById("psiAbsExt");
+        this.domTempF = document.getElementById("tempF");
+        this.domTempC = document.getElementById("tempC");
+        this.domHumPct = document.getElementById("humPct");
         this.domStatus = document.getElementById("status");
         this.domStart = document.getElementById("start");
         this.domStop = document.getElementById("stop");
@@ -250,6 +255,7 @@ class App
 
         this.domSnapshotBaselinePsi.addEventListener("click", (e) => {
             DoSet("snapshotPsiBaseline", this.domPsiAbs.innerHTML);
+            DoSet("snapshotPsiBaselineExt", this.domPsiAbsExt.innerHTML);
         });
 
         this.domStart.addEventListener("click", (e) => {
@@ -418,8 +424,17 @@ class App
             }
 
             this.domPsiAbs.innerHTML = parseFloat(json.psiAbs).toFixed(2);
+            
+            this.domPsiAbsExt.innerHTML = parseFloat(json.psiAbsExt).toFixed(2);
+            this.domTempF.innerHTML = parseInt(json.tempF);
+            this.domTempC.innerHTML = parseInt((json.tempF - 32) * (5.0 / 9.0));
+            this.domHumPct.innerHTML = `${parseInt(json.humPct)} %`;
+            
             this.domPsiBaseline.innerHTML = parseFloat(json.psiBaseline).toFixed(2);
-            this.domPsiRelative.innerHTML = parseFloat(json.psi).toFixed(2);
+            this.domPsiBaselineExt.innerHTML = parseFloat(json.psiBaselineExt).toFixed(2);
+            let psiRelative = parseFloat(json.psi).toFixed(2);
+            if (psiRelative == -0.00) { psiRelative = (0).toFixed(2); }
+            this.domPsiRelative.innerHTML = psiRelative;
 
             this.domPsi.value = parseFloat(json.psi);
             this.domPsiVal.value = this.domPsi.value
@@ -525,7 +540,7 @@ th, td {
 }
 
 input[type="range"] {
-  width: 250px;
+  width: 210px;
 }
 
 .thinbr {
@@ -540,14 +555,54 @@ input[type="range"] {
 
         <div class="control_container">
             <div class="control">
+                Internal
+                <br/>
+                <br/>
                 <table>
                     <tr>
-                        <td>PSI Now</td>
-                        <td><span id="psiAbs">14.52</span></td>
+                        <td>PSI</td>
+                        <td><span id="psiAbs">14.50</span></td>
+                    </tr>
+                </table>
+            </div>
+            
+
+            <div class="control">
+                External
+                <br/>
+                <br/>
+                <table>
+                    <tr>
+                        <td>PSI</td>
+                        <td><span id="psiAbsExt">14.50</span></td>
                     </tr>
                     <tr>
-                        <td>PSI Baseline</td>
-                        <td><span id="psiBaseline">14.52</span></td>
+                        <td>TempF</td>
+                        <td class="align_right"><span id="tempF">72</span></td>
+                    </tr>
+                    <tr>
+                        <td>TempC</td>
+                        <td class="align_right"><span id="tempC">22</span></td>
+                    </tr>
+                    <tr>
+                        <td>HumPct</td>
+                        <td class="align_right"><span id="humPct">50 %</span></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="control">
+                Baseline / Relative
+                <br/>
+                <br/>
+                <table>
+                    <tr>
+                        <td>PSI Internal</td>
+                        <td><span id="psiBaseline">14.50</span></td>
+                    </tr>
+                    <tr>
+                        <td>PSI External</td>
+                        <td><span id="psiBaselineExt">14.50</span></td>
                     </tr>
                     <tr>
                         <td>PSI Relative</td>
@@ -555,10 +610,9 @@ input[type="range"] {
                     </tr>
                 </table>
                 <button id="snapshotBaselinePsi">Snapshot Baseline</button>
-
             </div>
 
-            <div class="control" style="display: inline-grid; width: 300px">
+            <div class="control" style="display: inline-grid; width: 185px">
                 Status: <span id="status"></span><br/>
             
                 <button id="start">Start Inflation</button>
@@ -579,12 +633,12 @@ input[type="range"] {
                     </tr>
                     <tr>
                         <td>PSI High</td>
-                        <td><input id="psiHigh" type="range" min="0" value="0.1" max="0.5" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = parseFloat(this.value).toFixed(2)"></td>
+                        <td><input id="psiHigh" type="range" min="0" value="0.2" max="0.5" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = parseFloat(this.value).toFixed(2)"></td>
                         <td><output id="psiHighVal">0.10</output></td>
                     </tr>
                     <tr>
                         <td>PSI Low</td>
-                        <td><input id="psiLow" type="range" min="0" value="0.2" max="0.5" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = parseFloat(this.value).toFixed(2)"></td>
+                        <td><input id="psiLow" type="range" min="0" value="0.1" max="0.5" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = parseFloat(this.value).toFixed(2)"></td>
                         <td><output id="psiLowVal">0.20</output></td>
                     </tr>
                 </table>
@@ -623,10 +677,19 @@ input[type="range"] {
     <span id="histLen">Full</span>
 
     <br/>
-
-    <div class="thinbr"></div>
-
-    </iframe><iframe scrolling="no" src="ChartTempHumidity.html"></iframe>
     
+    <div class="thinbr"></div>
+    
+    </iframe><iframe scrolling="no" src="ChartTempHumidity.html"></iframe>
+
+    <br/><br/><br/><br/>
+    <br/><br/><br/><br/>
+    <br/><br/><br/><br/>
+    <br/><br/><br/><br/>
+    <br/><br/><br/><br/>
+    <br/><br/><br/><br/>
+    <br/><br/><br/><br/>
+    <br/><br/><br/><br/>
+
     </body>
 </html>
