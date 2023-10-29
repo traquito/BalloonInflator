@@ -146,24 +146,26 @@ function FtoC(tempF)
 
 class DataCuller
 {
-    constructor(data, secMerge)
+    constructor(name, data, maxAgeSec, mergeMs)
     {
+        this.name = name;
         this.data = data;
 
         // cull data older than this
-        this.MAX_AGE_MS = 10 * 60 * 1000;
+        this.MAX_AGE_SEC = maxAgeSec;
 
-        this.Reset();
-    }
+        // merge this many seconds of data together at a time
+        this.MERGE_DURATION_MS = mergeMs;
 
-    Reset()
-    {
+        this.eliminatedCount = 0;
+
         this.idxCullStart = 0;
     }
 
     Cull()
     {
-        // console.log("Cull")
+        let timeStart = Date.now();
+        let arrSizeStart = this.data.length;
 
         // want to eliminate high-resolution data which is older than a given
         // duration.
@@ -187,15 +189,15 @@ class DataCuller
         for (idxCullEnd = this.idxCullStart; idxCullEnd < this.data.length; ++idxCullEnd)
         {
             let ts = this.data[idxCullEnd][0];
-            let tsAge = now - ts;
+            let tsAge = (now - ts) / 1000;
 
-            if (tsAge <= this.MAX_AGE_MS)
+            if (tsAge <= this.MAX_AGE_SEC)
             {
                 break;
             }
         }
 
-        // console.log(`start: ${this.idxCullStart}, end: ${idxCullEnd}, `)
+        // console.log(`start: ${this.idxCullStart}, end: ${idxCullEnd}, ${idxCullEnd - this.idxCullStart + 1}`)
         
         if (idxCullEnd == this.data.length && this.data.length != 0)
         {
@@ -203,35 +205,63 @@ class DataCuller
             // console.log("  end trimmed by 1");
         }
 
-        if (idxCullEnd != this.idxCullStart)
+        if (idxCullEnd > this.idxCullStart)
         {
             // console.log(arr.slice());
 
             let i = this.idxCullStart;
             let j = i;
 
-            let sec = parseInt(this.data[j][0] / 1000);;
-            let secLast = null;
+            let ms = this.data[j][0];
+            let msLast = ms;
 
             while (j <= idxCullEnd)
             {
-                let sec = parseInt(this.data[j][0] / 1000);
+                ms = this.data[j][0];
 
-                if (sec != secLast)
+                let mergeData = [];
+
+                // gather data to merge
+                while (ms - msLast <= this.MERGE_DURATION_MS && j <= idxCullEnd)
                 {
-                    this.data[i] = this.data[j]
-                    // console.log(`${i} <= ${j} (${sec})`);
+                    ms = this.data[j][0];
 
-                    ++i;
+                    mergeData.push(this.data[j]);
+
+                    ++j;
                 }
 
-                ++j;
-                secLast = sec;
+                // merge
+                let val = this.data[i];
+                if (mergeData.length != 0)
+                {
+                    let sum = 0;
+
+                    for (let m of mergeData)
+                    {
+                        sum += m[1];
+                    }
+
+                    let avg = sum / mergeData.length;
+
+                    val = [mergeData[0][0], avg];
+                }
+
+                // console.log(`${i} -> ${j} : ${mergeData.length} = ${val}`);
+                // console.log(mergeData);
+                // console.log(mergeData[0][0]);
+                // console.log(mergeData[mergeData.length - 1][0]);
+
+                // capture
+                this.data[i] = val;
+                ++i;
+
+                msLast = ms;
             }
 
             // console.log(`copied ${i - this.idxCullStart} elements`);
             // console.log(`discarded ${j - i} elements`);
-            // console.log(`arr has ${arr.length - j} elements to the right`);
+            // console.log(`arr has ${this.data.length - j} elements to the right`);
 
             // shift the rest of the array to the left
             this.data.copyWithin(i, j);
@@ -248,9 +278,15 @@ class DataCuller
             // console.log(this.data.slice());
             // console.log()
     
+            let arrSizeEnd = this.data.length;
+            let arrSizeDiff = arrSizeStart - arrSizeEnd;
+            this.eliminatedCount += arrSizeDiff;
+            let timeEnd = Date.now();
+            let diffMs = timeEnd - timeStart;
+            // console.log(`${this.name} data now ${arrSizeEnd}, eliminated ${arrSizeDiff} / ${idxCullEnd - this.idxCullStart + 1} elements in ${diffMs} ms, total ${this.eliminatedCount} eliminated`);
+            
             this.idxCullStart = i;
         }
-
     }
 }
 
@@ -261,13 +297,19 @@ class App
         this.dataPsiPwm = this.MakeDataPsiPwm();
         this.dataTempHumidity = this.MakeDataTempHumidity();
 
+        // how frequently should we cull?
+        this.CULL_INTERVAL_SEC = 60;
+
+        // what duration of data should remain high resolution?
+        this.MAX_AGE_SEC = 10 * 60;
+
         this.cullerList = [
-            new DataCuller(this.dataPsiPwm.psiSeries.data),
-            new DataCuller(this.dataPsiPwm.psiHighSeries.data),
-            new DataCuller(this.dataPsiPwm.psiLowSeries.data),
-            new DataCuller(this.dataPsiPwm.pwmSeries.data),
-            new DataCuller(this.dataTempHumidity.tempFSeries.data),
-            new DataCuller(this.dataTempHumidity.humSeries.data),
+            new DataCuller("PSI",      this.dataPsiPwm.psiSeries.data,         this.MAX_AGE_SEC, 1000),
+            new DataCuller("PSI High", this.dataPsiPwm.psiHighSeries.data,     this.MAX_AGE_SEC, 1000),
+            new DataCuller("PSI Low",  this.dataPsiPwm.psiLowSeries.data,      this.MAX_AGE_SEC, 1000),
+            new DataCuller("PWM",      this.dataPsiPwm.pwmSeries.data,         this.MAX_AGE_SEC, 1000),
+            new DataCuller("TempF",    this.dataTempHumidity.tempFSeries.data, this.MAX_AGE_SEC, 1000),
+            new DataCuller("Hum",      this.dataTempHumidity.humSeries.data,   this.MAX_AGE_SEC, 1000),
         ];
     }
 
@@ -452,13 +494,12 @@ class App
         });
 
         // Set up data culling
-        let CULL_INTERVAL_MS = 60 * 1000;
         setInterval(() => {
             for (let culler of this.cullerList)
             {
                 culler.Cull();
             }
-        }, CULL_INTERVAL_MS);
+        }, this.CULL_INTERVAL_SEC * 1000);
 
         // trigger polling
         this.OnTimeout();
@@ -583,7 +624,7 @@ class App
         }
 
         // schedule next
-        let INTERVAL_MS = 50;
+        let INTERVAL_MS = 100;
         setTimeout(() => { this.OnTimeout() }, INTERVAL_MS);
     }
 }
