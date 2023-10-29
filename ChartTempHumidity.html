@@ -22,6 +22,11 @@ window.addEventListener("message", e => {
     PlotData(e.data);
 });
 
+
+let chart = echarts.init(document.getElementById('target'));
+window.addEventListener("resize", chart.resize);
+
+
 function PlotData(e)
 {
     if (e.data)
@@ -162,12 +167,10 @@ function PlotData(e)
         option.series[1].symbol = "none";
         option.series[2].symbol = "none";
 
-        // create chart
-        let chart = echarts.init(document.getElementById('target'));
-        chart.setOption(option, true);
-
-        // handle resizing
-        window.addEventListener("resize", chart.resize);
+        if (chart)
+        {
+            chart.setOption(option, true);
+        }
     }
 }
 

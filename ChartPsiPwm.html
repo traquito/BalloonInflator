@@ -7,62 +7,6 @@
       
 <script type="module">
 
-// Expect data in the form of:
-// window.addEventListener('DOMContentLoaded', (event) => {
-//     let e = {
-//         data: {
-//             tempFMin: 0.0,
-//             tempFMax: 0.5,
-
-//             tempFMin: 0.0,
-//             tempFMax: 0.5,
-    
-//             tempSeries: {
-//                 data: [
-//                     ["2023-10-15 10:13:00", 0.10],
-//                     ["2023-10-15 10:13:01", 0.20],
-//                     ["2023-10-15 10:13:02", 0.15],
-//                     ["2023-10-15 10:13:03", 0.25],
-//                 ],
-//             },
-    
-//             psiHighSeries: {
-//                 data: [
-//                     ["2023-10-15 10:13:00", 0.20],
-//                     ["2023-10-15 10:13:01", 0.20],
-//                     ["2023-10-15 10:13:02", 0.20],
-//                     ["2023-10-15 10:13:03", 0.25],
-//                 ],
-//             },
-    
-//             psiLowSeries: {
-//                 data: [
-//                     ["2023-10-15 10:13:00", 0.10],
-//                     ["2023-10-15 10:13:01", 0.10],
-//                     ["2023-10-15 10:13:02", 0.10],
-//                     ["2023-10-15 10:13:03", 0.15],
-//                 ],
-//             },
-    
-            
-            
-//             pwmMin:   0,
-//             pwmMax: 100,
-            
-//             pwmSeries: {
-//                 data: [
-//                     ["2023-10-15 10:13:00",  0],
-//                     ["2023-10-15 10:13:01", 50],
-//                     ["2023-10-15 10:13:02", 75],
-//                     ["2023-10-15 10:13:03", 60],
-//                 ],
-//             },
-//         }
-//     }
-//     PlotData(e);
-// });
-
-
 window.addEventListener('DOMContentLoaded', (event) => {
     if (window.top != window)
     {
@@ -76,6 +20,11 @@ window.addEventListener('DOMContentLoaded', (event) => {
 window.addEventListener("message", e => {
     PlotData(e.data);
 });
+
+
+let chart = echarts.init(document.getElementById('target'));
+window.addEventListener("resize", chart.resize);
+
 
 function PlotData(e)
 {
@@ -212,12 +161,10 @@ function PlotData(e)
         option.series[2].symbol = "none";
         option.series[3].symbol = "none";
 
-        // create chart
-        let chart = echarts.init(document.getElementById('target'));
-        chart.setOption(option, true);
-
-        // handle resizing
-        window.addEventListener("resize", chart.resize);
+        if (chart)
+        {
+            chart.setOption(option, true);
+        }
     }
 }
 

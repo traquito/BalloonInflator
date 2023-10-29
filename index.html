@@ -144,12 +144,131 @@ function FtoC(tempF)
     return (tempF - 32.0) * (5.0 / 9.0);
 }
 
+class DataCuller
+{
+    constructor(data, secMerge)
+    {
+        this.data = data;
+
+        // cull data older than this
+        this.MAX_AGE_MS = 10 * 60 * 1000;
+
+        this.Reset();
+    }
+
+    Reset()
+    {
+        this.idxCullStart = 0;
+    }
+
+    Cull()
+    {
+        // console.log("Cull")
+
+        // want to eliminate high-resolution data which is older than a given
+        // duration.
+        // to do this, keep track of the index of the data not yet culled
+        // and periodically check back to cull what new data has arrived.
+
+        // the collected data fall into 3 categories
+        // - culled
+        // - to be culled
+        // - too fresh to be culled
+
+        // the index we cache tracks the "to be culled" start point
+
+        // we will collapse the "to be culled" part in on itself and shift
+        // the remainder of the data within the array
+
+        // determine the size of the "to be culled" region
+        let idxCullEnd = null;
+        let now = Date.now();
+
+        for (idxCullEnd = this.idxCullStart; idxCullEnd < this.data.length; ++idxCullEnd)
+        {
+            let ts = this.data[idxCullEnd][0];
+            let tsAge = now - ts;
+
+            if (tsAge <= this.MAX_AGE_MS)
+            {
+                break;
+            }
+        }
+
+        // console.log(`start: ${this.idxCullStart}, end: ${idxCullEnd}, `)
+        
+        if (idxCullEnd == this.data.length && this.data.length != 0)
+        {
+            idxCullEnd = this.data.length - 1;
+            // console.log("  end trimmed by 1");
+        }
+
+        if (idxCullEnd != this.idxCullStart)
+        {
+            // console.log(arr.slice());
+
+            let i = this.idxCullStart;
+            let j = i;
+
+            let sec = parseInt(this.data[j][0] / 1000);;
+            let secLast = null;
+
+            while (j <= idxCullEnd)
+            {
+                let sec = parseInt(this.data[j][0] / 1000);
+
+                if (sec != secLast)
+                {
+                    this.data[i] = this.data[j]
+                    // console.log(`${i} <= ${j} (${sec})`);
+
+                    ++i;
+                }
+
+                ++j;
+                secLast = sec;
+            }
+
+            // console.log(`copied ${i - this.idxCullStart} elements`);
+            // console.log(`discarded ${j - i} elements`);
+            // console.log(`arr has ${arr.length - j} elements to the right`);
+
+            // shift the rest of the array to the left
+            this.data.copyWithin(i, j);
+            // console.log(`copyWithin(${i}, ${j})`);
+
+            // console.log(arr.slice());
+
+            if (j != i)
+            {
+                this.data.splice(-(j - i));
+                // console.log(`splice(${-(j - i)})`);
+            }
+
+            // console.log(this.data.slice());
+            // console.log()
+    
+            this.idxCullStart = i;
+        }
+
+    }
+}
+
 class App
 {
     ResetData()
     {
         this.dataPsiPwm = this.MakeDataPsiPwm();
         this.dataTempHumidity = this.MakeDataTempHumidity();
+
+        this.cullerList = [
+            new DataCuller(this.dataPsiPwm.psiSeries.data),
+            new DataCuller(this.dataPsiPwm.psiHighSeries.data),
+            new DataCuller(this.dataPsiPwm.psiLowSeries.data),
+            new DataCuller(this.dataPsiPwm.pwmSeries.data),
+            new DataCuller(this.dataTempHumidity.tempFSeries.data),
+            new DataCuller(this.dataTempHumidity.humSeries.data),
+        ];
     }
 
     MakeDataPsiPwm()
@@ -332,14 +451,23 @@ class App
             }
         });
 
+        // Set up data culling
+        let CULL_INTERVAL_MS = 60 * 1000;
+        setInterval(() => {
+            for (let culler of this.cullerList)
+            {
+                culler.Cull();
+            }
+        }, CULL_INTERVAL_MS);
 
-        // Set up polling
-        setInterval(() => { this.OnTimeout() }, 200);
+        // trigger polling
         this.OnTimeout();
     }
 
     async OnTimeout()
     {
+        let timeStartMs = Date.now();
+
         let json = await DoGet("data");
 
         if (json != null)
@@ -440,7 +568,7 @@ class App
             this.domPsiVal.value = this.domPsi.value
 
             this.domPwm.value = parseInt(json.pwm);
-            this.domPwmVal.value = `${this.domPwm.value} %`;
+            this.domPwmVal.value = `${this.domPwm.value == 100 ? this.domPwm.value + '%': this.domPwm.value + ' %'}`;
 
             this.domPsiHigh.value = parseFloat(json.psiHigh);
             this.domPsiHighVal.value = parseFloat(json.psiHigh).toFixed(2);
@@ -453,6 +581,10 @@ class App
             this.domStatus.innerHTML = "ERROR";
             this.domStatus.style.backgroundColor = "red";
         }
+
+        // schedule next
+        let INTERVAL_MS = 50;
+        setTimeout(() => { this.OnTimeout() }, INTERVAL_MS);
     }
 }
 
@@ -539,8 +671,13 @@ th, td {
     padding: 10px;
 }
 
+.control_right
+{
+    width: 314px;
+}
+
 input[type="range"] {
-  width: 210px;
+  width: 203px;
 }
 
 .thinbr {
@@ -619,7 +756,7 @@ input[type="range"] {
                 <button id="stop">Stop Inflation</button>
             </div>
 
-            <div class="control">
+            <div class="control control_right">
                 <table>
                     <tr class="debug">
                         <td>PSI (debug)</td>
@@ -628,7 +765,7 @@ input[type="range"] {
                     </tr>
                     <tr>
                         <td>PWM %</td>
-                        <td><input id="pwm" type="range" min="0" value="80" max="100" step="1" title="PWM" placeholder="PWM" oninput="pwmVal.value = `${this.value} %`"></td>
+                        <td><input id="pwm" type="range" min="0" value="80" max="100" step="1" title="PWM" placeholder="PWM" oninput="pwmVal.value = `${this.value == 100 ? this.value + '%': this.value + ' %'}`"></td>
                         <td><output id="pwmVal">80 %</output></td>
                     </tr>
                     <tr>
