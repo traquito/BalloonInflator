@@ -288,7 +288,7 @@ class Application():
             self.psi = float(value)
 
     def OnTimeout(self):
-        PCT_STEP = 5
+        PCT_STEP = 2
 
         self.psiAbs = self.pSensor.GetPsi()
         self.humPct, self.psiAbsExt, self.tempF = self.bme280.GetValue()
