@@ -370,7 +370,7 @@ class App
 
     constructor()
     {
-        this.radRangeVal = 0.5;
+        this.radRangeVal = 1;
         this.ResetData();
 
         this.domSnapshotBaselinePsi = document.getElementById("snapshotBaselinePsi");
@@ -811,12 +811,12 @@ input[type="range"] {
                     </tr>
                     <tr>
                         <td>PSI High</td>
-                        <td><input id="psiHigh" type="range" min="0" value="0.2" max="0.5" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = parseFloat(this.value).toFixed(2)"></td>
+                        <td><input id="psiHigh" type="range" min="0" value="0.2" max="1.0" step="0.01" title="PSI High" placeholder="PSI High" oninput="psiHighVal.value = parseFloat(this.value).toFixed(2)"></td>
                         <td><output id="psiHighVal">0.10</output></td>
                     </tr>
                     <tr>
                         <td>PSI Low</td>
-                        <td><input id="psiLow" type="range" min="0" value="0.1" max="0.5" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = parseFloat(this.value).toFixed(2)"></td>
+                        <td><input id="psiLow" type="range" min="0" value="0.1" max="1.0" step="0.01" title="PSI Low" placeholder="PSI Low" oninput="psiLowVal.value = parseFloat(this.value).toFixed(2)"></td>
                         <td><output id="psiLowVal">0.20</output></td>
                     </tr>
                 </table>
@@ -826,8 +826,8 @@ input[type="range"] {
                 <table>
                     <tr>
                         <td>PSI Scale</td>
-                        <td><input type="radio" id="rangeHalf" name="range" value="0.5" checked><label for="rangeHalf">0.5 PSI</label></td>
-                        <td><input type="radio" id="rangeFull" name="range" value="1.0"><label for="rangeFull">1.0 PSI</label></td>
+                        <td><input type="radio" id="rangeHalf" name="range" value="0.5"><label for="rangeHalf">0.5 PSI</label></td>
+                        <td><input type="radio" id="rangeFull" name="range" value="1.0" checked><label for="rangeFull">1.0 PSI</label></td>
                     </tr>
                 </table>
             </div>

@@ -65,6 +65,8 @@ function PlotData(e)
                     axisLabel: {
                         formatter: params => params.toFixed(2),
                     },
+                    minInterval: e.data.psiMax == 0.5 ? 0.05 : 0.1,
+                    maxInterval: e.data.psiMax == 0.5 ? 0.05 : 0.1,
                 },
                 {
                     type: "value",
@@ -80,6 +82,8 @@ function PlotData(e)
                     axisLabel: {
                         formatter: params => `${params} %`,
                     },
+                    minInterval: 10,
+                    maxInterval: 10,
                 },
             ],
             series: [
